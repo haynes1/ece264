@@ -32,9 +32,14 @@ int arrayCountNegative(int * array, int len)
 
 int arrayIsIncreasing(int * array, int len)
 {   
-	int up = 1;
+	int up = len;
 	int i;
 	int x;
+
+
+	if (len != 0)
+	{
+		up = 1;
 
     for(i = 1; i < len; ++i) {
 
@@ -43,6 +48,7 @@ int arrayIsIncreasing(int * array, int len)
     		up++;
     	}
 
+}
 }
 
     if (up == len){
@@ -76,22 +82,14 @@ int arrayFindSmallest(int * array, int len)
 	int mindex;
 	int i;
 
-	mindex = 1;
+	mindex = 0;
 
-	for(i = 0; i < len-1; ++i){
+	for(i = 1; i < len; ++i){
 
 		if (array[i] < array[mindex])
 		{
 			mindex = i;
 		}
-
-		
-	}
-
-	if (array[0] <= array[1])
-	{
-		mindex = 0;
-	}
-
-    return mindex;
+}
+return mindex;
 }

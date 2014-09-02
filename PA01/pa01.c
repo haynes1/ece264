@@ -96,20 +96,20 @@ int main(int argc, char * * argv)
 {
     printf("it begins\n\n");
 
-    int tarray[] = { -3, -3, 2, 6, 5, 4, 1, 9, 8 };
-    int tarraylen = 9;
+    int tarray[] = {0, 2, 1};
+    int tarraylen = 3;
 
     int tsum = arraySum(tarray, tarraylen);
     int tnegs = arrayCountNegative(tarray, tarraylen);
-    int tups = arrayIsIncreasing(tarray, tarraylen);
+    int tups = arrayIsIncreasing(tarray, 0);
     int tind = arrayIndexRFind(4, tarray, tarraylen);
     int tmin = arrayFindSmallest(tarray, tarraylen);
 
-    printf("%d\n", tsum );
-    printf("%d\n", tnegs);
+    //printf("%d\n", tsum );
+    //printf("%d\n", tnegs);
     printf("%d\n", tups);
-    printf("%d\n\n", tind);
-    printf("%d\n\n", tmin);
+    //printf("%d\n\n", tind);
+    //printf("%d\n\n", tmin);
 
     
 
