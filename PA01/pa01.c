@@ -94,11 +94,24 @@ void test_01_arrayCountNegative()
 
 int main(int argc, char * * argv)
 {
-    printf("Welcome to ECE264, we are working on PA01.\n\n");
+    printf("it begins\n\n");
 
-    // Uncomment to run two example (incomplete) testcases.
-    //test_00_arraySum();
-    //test_01_arrayCountNegative();
+    int tarray[] = { -3, -3, 2, 6, 5, 4, 1, 9, 8 };
+    int tarraylen = 9;
+
+    int tsum = arraySum(tarray, tarraylen);
+    int tnegs = arrayCountNegative(tarray, tarraylen);
+    int tups = arrayIsIncreasing(tarray, tarraylen);
+    int tind = arrayIndexRFind(4, tarray, tarraylen);
+    int tmin = arrayFindSmallest(tarray, tarraylen);
+
+    printf("%d\n", tsum );
+    printf("%d\n", tnegs);
+    printf("%d\n", tups);
+    printf("%d\n\n", tind);
+    printf("%d\n\n", tmin);
+
+    
 
     return EXIT_SUCCESS;
 }
