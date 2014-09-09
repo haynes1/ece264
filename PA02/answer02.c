@@ -57,16 +57,50 @@ char * my_strchr(const char * str, int ch)
 	
 }
 
-char * my_strrchr(const char * str, int ch)
-{
-
-	return 0;
-}
 
 char * my_strstr(const char * haystack, const char * needle)
 {
+	int nlen = my_strlen(needle);
 
-	return 0;
+	int i; //iterator for haystack count
+	int c; //iterator for needle count
+	int test; //will be 0 if the needle is found in the haystack
+
+	i = 0;
+	c = 0;
+	test = 0;
+
+	while (haystack[i] != 0){  //iterates through haystack
+
+		if (haystack[i] == needle[i]){ //if we find the first letter of needle
+
+			c = i;
+
+			while (c < nlen){ //will iterate through needle
+
+				if (haystack[c] != needle[c]){ //test to see if each of the letters in needle match haystack
+
+					test++; //will occur if there is not a match
+				}
+
+				c++;
+			}
+		}
+
+		i++;
+	}
+
+	if (test == 0) //needle was found 
+	{
+		return (char *)needle;
+	}
+
+	else {
+
+		return NULL;
+	}
+
+
 }
 
 char * my_strcpy(char * dest, const char * src)
