@@ -40,17 +40,16 @@ char * my_strchr(const char * str, int ch)
 {
 	int i;
 
-	i = 0;
+	int len = my_strlen(str);
 	
 	//iterates through str
-	while (str[i] != '\0'){
+	for(i = 0; i <= len; i++){
 
 		if (str[i] == ch)
 		{
 			return (char*)(&str[i]);
 		}
 
-		i++;
 	}
 
 	return NULL;
@@ -81,28 +80,29 @@ char * my_strrchr(const char * str, int ch){
 char * my_strstr(const char * haystack, const char * needle)
 {
 
-	int i; 
-
-
 	int j = 0;
+	int i = 0;
 
 	while(haystack[i] != '\0'){ //iterates through haystack
 
-		j = 0;
-		while(haystack[i+j] == needle[j] && needle[j] != '\0'){ //compares wherever we are in haystack to the beginning of needle
+		while(haystack[i+j] == needle[j] && needle[j] != '\0'){ //compares wherever we are in haystack to needle and goes till end of needle
+			
+			if(haystack[i+j] == '\0'){
+				return NULL;
+			}
+
 			j++;
 		}
 
 		if(needle[j] == '\0'){ //made it to the end of needle, therefore the needle is in the haystack
 		
-			return (char*)(haystack + i);
-		}else{
-			i++;
+			return (char*)(&haystack[i]);
 		}
+
+		i++;
 
 	}
 
-	
 	return NULL; //no needle found
 
 }
@@ -118,8 +118,6 @@ char * my_strcpy(char * dest, const char * src)
 		dest[i] = src[i];
 		i++;
 	}
-
-	i++;
 
 	dest[i] = '\0';
 
