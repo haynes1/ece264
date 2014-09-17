@@ -1,5 +1,6 @@
 #include "answer03.h"
 #include <stdlib.h>
+#include <string.h>
 
 /**
  * Append the C-string 'src' to the end of the C-string '*dest'.
@@ -27,6 +28,15 @@
  */
 char * strcat_ex(char * * dest, int * n, const char * src)
 {
+	int total_len = strlen(dest) + strlen(src) + 2; //this length includes the /o terminator for both dest and src
+	int given_buffer = sizeof(dest);
+
+	if (dest == NULL || given_buffer < total_len)
+	{
+		char  * new_dest;
+		new_dest = malloc(1 + 2 * (strlen(*dest) + strlen(src)));
+		
+	}
 	return 0;
 }
 
