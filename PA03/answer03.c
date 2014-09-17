@@ -35,9 +35,20 @@ char * strcat_ex(char * * dest, int * n, const char * src)
 	{
 		char  * new_dest;
 		new_dest = malloc(1 + 2 * (strlen(*dest) + strlen(src)));
-		
+		if (new_dest != NULL) //ensure malloc worked
+		{
+			strcpy(new_dest, dest); //copy dest into the new buffer
+			strcat(new_dest, src); //concatenate src onto new dest
+			return new_dest; //return
+		}
+		free(new_dest);
+
 	}
-	return 0;
+	else
+	{
+		strcat(dest, src);
+		return dest;
+	}
 }
 
 /**
