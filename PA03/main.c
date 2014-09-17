@@ -5,15 +5,16 @@
 
 // This does not work... fix it.
 // Hint: look up swap(int *, int *) in the course notes
-void swapString(const char * a, const char * b)
+void swapString(char ** a, char ** b)
 {
-    const char * tmp = a;
-    a = b;
-    b = tmp;
-    printf("Calling swapString(...)\n");
+    char * tmp = * a;
+    * a = * b;
+    * b = tmp;
+
+    printf("\nBefore the swap: Calling swapString(...)\n");
     printf("&a = %p\n", &a);
     printf("&b = %p\n", &b);
-    printf("&tmp = %p\n", &tmp);
+    printf("tmp = %p\n", tmp);
 }
 
 int main(int argc, char * * argv)
@@ -34,13 +35,13 @@ int main(int argc, char * * argv)
 
     // Let's create our own array of strings
     printf("\nTesting swapString(...)\n");
-    const char * str1 = "one";
-    const char * str2 = "two";
-    printf("Before swap, str1 == %p (i.e., '%s'), "
-	   "str2 == %p (i.e., '%s')\n", str1, str1, str2, str2);
-    swapString(str1, str2);
-    printf("After swap, str1 == %p (i.e., '%s'), "
-	   "str2 == %p (i.e., '%s')\n", str1, str1, str2, str2);
+    char * str1 = "one";
+    char * str2 = "two";
+    printf("Before swap, str1* == %p (i.e., '%s'), "
+	   "str2* == %p (i.e., '%s')\n", str1, str1, str2, str2);
+    swapString(&str1, &str2);
+    printf("After swap, str1* == %p (i.e., '%s'), "
+	   "str2* == %p (i.e., '%s')\n", str1, str1, str2, str2);
 
     return EXIT_SUCCESS;
 }
