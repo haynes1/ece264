@@ -25,7 +25,10 @@
  * Hint: These <string.h> functions will help: strcat, strcpy, strlen.
  * Hint: Leak no memory.
  */
-char * strcat_ex(char * * dest, int * n, const char * src);
+char * strcat_ex(char * * dest, int * n, const char * src)
+{
+	return 0;
+}
 
 /**
  * Takes a string and splits it into an array of strings according to delimiter.
@@ -50,6 +53,9 @@ char * strcat_ex(char * * dest, int * n, const char * src);
  * Hint: read the FAQ...
  */
 char * * explode(const char * str, const char * delims, int * arrLen);
+{
+	return 0;
+}
 
 /**
  * Takes an array of strings, and concatenates the elements into a single
@@ -67,7 +73,10 @@ char * * explode(const char * str, const char * delims, int * arrLen);
  *
  * Hint: use strcat_ex in a for loop.
  */
-char * implode(char * * strArr, int len, const char * glue);
+char * implode(char * * strArr, int len, const char * glue)
+{
+	return 0;
+}
 
 /**
  * Takes an array of C-strings, and sorts them alphabetically, ascending.
@@ -85,7 +94,10 @@ char * implode(char * * strArr, int len, const char * glue);
  * Hint: use the <stdlib.h> function "qsort"
  * Hint: you must _clearly_ understand the typecasts.
  */
-void sortStringArray(char * * arrString, int len);
+void sortStringArray(char * * arrString, int len)
+{
+	return 0;
+}
 
 /**
  * Sorts the characters in a string.
@@ -100,7 +112,10 @@ void sortStringArray(char * * arrString, int len);
  * Hint: use the <stdlib.h> function "qsort"
  * Hint: you must _clearly_  understand the typecasts.
  */
-void sortStringCharacters(char * str);
+void sortStringCharacters(char * str)
+{
+	return 0;
+}
 
 /**
  * Safely frees all memory associated with strArr, and then strArr itself.
@@ -116,6 +131,9 @@ void sortStringCharacters(char * str);
  * destroyStringArray(strArr, len); // cleans memory -- no memory leaks
  * destroyStringArray(NULL, 0); // does nothing, does not crash.
  */
-void destroyStringArray(char * * strArr, int len);
+void destroyStringArray(char * * strArr, int len)
+{
+	return 0;
+}
 
 #endif
