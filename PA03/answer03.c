@@ -28,27 +28,19 @@
  */
 char * strcat_ex(char * * dest, int * n, const char * src)
 {
-	int total_len = strlen(dest) + strlen(src) + 2; //this length includes the /o terminator for both dest and src
-	int given_buffer = sizeof(dest);
+	//the length of the concatenated string including the single /0 at the end
+	int total_len = strlen(*dest) + strlen(src) + 1;
 
-	if (dest == NULL || given_buffer < total_len)
+	if (dest == NULL || n < total_len)
 	{
-		char  * new_dest;
-		new_dest = malloc(1 + 2 * (strlen(*dest) + strlen(src)));
-		if (new_dest != NULL) //ensure malloc worked
-		{
-			strcpy(new_dest, dest); //copy dest into the new buffer
-			strcat(new_dest, src); //concatenate src onto new dest
-			return new_dest; //return
-		}
-		free(new_dest);
-
+		dest = realloc(1 + 2 * (strlen(*dest) + strlen(src)));
+		strcat(new_dest, src); //concatenate src onto new dest
 	}
 	else
 	{
 		strcat(dest, src);
-		return dest;
 	}
+	return dest;
 }
 
 /**
