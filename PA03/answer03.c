@@ -29,18 +29,19 @@
 char * strcat_ex(char * * dest, int * n, const char * src)
 {
 	//the length of the concatenated string including the single /0 at the end
+	int destlen = * n;
 	int total_len = strlen(*dest) + strlen(src) + 1;
 
-	if (dest == NULL || n < total_len)
+	if (* dest == NULL || destlen < total_len)
 	{
-		dest = realloc(1 + 2 * (strlen(*dest) + strlen(src)));
-		strcat(new_dest, src); //concatenate src onto new dest
+		*dest = realloc(*dest, 1 + 2 * (strlen(*dest) + strlen(src)));
+		strcat(*dest, src); //concatenate src onto new dest
 	}
 	else
 	{
-		strcat(dest, src);
+		strcat(*dest, src);
 	}
-	return dest;
+	return *dest;
 }
 
 /**
@@ -65,8 +66,47 @@ char * strcat_ex(char * * dest, int * n, const char * src)
  * Hint: this question is hard; it will help to draw out your algorithm.
  * Hint: read the FAQ...
  */
-char * * explode(const char * str, const char * delims, int * arrLen);
+char * * explode(const char * str, const char * delims, int * arrLen)
 {
+	int delim_indicies[strlen(str)]; //an array that holds all indicies of all delimiters
+	int num_delims = 0; //the number of delimiters
+	int i;
+	int j;
+	int k;
+
+	//iterate through str and test each entry to see if it is a delimiter
+	for (i = 0; i < strlen(str); i++)
+	{
+		//iterate through delim while on each index of str
+		for (j = 0; j < strlen(delims); j++)
+		{
+			if (str[i] == delims[j])//if it is a delimiter
+			{
+				delim_indicies[num_delims] = i; //that index is added to delim_indicies
+				num_delims++;
+			}
+		}
+	}
+
+	char * * exploded = malloc((num_delims+1) * sizeof(char *)); //2D array
+	int first = 0; //the beginning of a substring
+	int last = 0; //the end of a substring +1
+	int subsize; //the size of the substring
+
+	for (k = 0; k < num_delims; k++)
+	{
+		last = delims[k] + 1; //set last to the end of the first substring and include the delimiter
+		subsize = last - first; //use first and last to find the size of the substring
+
+		memcpy(* exploded[0][k], first, subsize); //copy the substring between first and last into the row k
+
+		exploded[subsize + 1][k] = '\0'; //give that substring a null terminator
+		first = last + 1; //move first to the area past the first delimiter
+
+
+	}
+
+
 	return 0;
 }
 
@@ -109,7 +149,7 @@ char * implode(char * * strArr, int len, const char * glue)
  */
 void sortStringArray(char * * arrString, int len)
 {
-	return 0;
+	return;
 }
 
 /**
@@ -127,7 +167,7 @@ void sortStringArray(char * * arrString, int len)
  */
 void sortStringCharacters(char * str)
 {
-	return 0;
+	return;
 }
 
 /**
@@ -146,7 +186,5 @@ void sortStringCharacters(char * str)
  */
 void destroyStringArray(char * * strArr, int len)
 {
-	return 0;
+	return;
 }
-
-#endif
