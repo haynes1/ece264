@@ -16,6 +16,16 @@ int main (int argc, char * * argv)
 	char * catenated = strcat_ex(&str1, &len1, str2);
 	printf("strcat_ex testing-----------------------------\n");
 	printf("concatenation: %s\n", catenated);
+	printf("\n");
+
+	printf("explode testing --------------------------------\n");
+	char * str3 = "This is Sparta mother!fuckers";
+	int arrLen = 0;
+	const char* delims = "! ";
+	printf("This is Sparta mother!fuckers, delims = ' ', and !\n");
+	char * * exploded = explode(str3, delims, &arrLen);
+	printf("%p\n", exploded); 
+
 
 	printf("\n");
 	return EXIT_SUCCESS;

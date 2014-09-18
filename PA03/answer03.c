@@ -29,19 +29,24 @@
 char * strcat_ex(char * * dest, int * n, const char * src)
 {
 	//the length of the concatenated string including the single /0 at the end
-	int destlen = * n;
+	int destlen = strlen(* dest) + 1;
 	int total_len = strlen(*dest) + strlen(src) + 1;
 
-	if (* dest == NULL || destlen < total_len)
+	if (* dest == NULL || destlen < total_len)//if we need to allocate more memory
 	{
-		*dest = realloc(*dest, 1 + 2 * (strlen(*dest) + strlen(src)));
+		char * newdest = malloc(1 + 2 * (strlen(*dest) + strlen(src)));
+		strcpy(newdest, * dest);
+		* dest = newdest;
 		strcat(*dest, src); //concatenate src onto new dest
+
+
+		return * dest;
 	}
 	else
 	{
-		strcat(*dest, src);
+		strcat(* dest, src);
+		return * dest;
 	}
-	return *dest;
 }
 
 /**
@@ -88,6 +93,8 @@ char * * explode(const char * str, const char * delims, int * arrLen)
 		}
 	}
 
+	printf("num_delims = %s\n",num_delims );
+
 	char * * exploded = malloc((num_delims+1) * sizeof(char *)); //2D string array
 	int first = 0; //the beginning of a substring
 	int last = 0; //the end of a substring +1
@@ -104,8 +111,10 @@ char * * explode(const char * str, const char * delims, int * arrLen)
 		first = last + 1; //moves first to the index after the delimiter
 	}
 
+	//still must do the arrLen thing
 
-	return exploded;
+
+	return 0;
 }
 
 /**
