@@ -30,7 +30,12 @@ int main (int argc, char * * argv)
 	{
 		printf("%s\n", exploded[i]);
 	}
+	printf("\n");
 
+	printf("implode testing --------------------------------\n");
+	const char * glue = " GLUE ";
+	char * imploded = implode(exploded, arrLen, glue);
+	printf("%s\n", imploded );
 
 	printf("\n");
 	return EXIT_SUCCESS;

@@ -145,7 +145,17 @@ char * * explode(const char * str, const char * delims, int * arrLen)
  */
 char * implode(char * * strArr, int len, const char * glue)
 {
-	return 0;
+	int i;
+	char * imploded;
+
+	strcat_ex(&imploded, &len, strArr[0]);
+
+	for (i = 1; i < len; ++i) //iterates by how many substrings are in strArr
+	{
+		strcat_ex(&imploded, &len, glue);
+		strcat_ex(&imploded, &len, strArr[i]);
+	}
+	return imploded;
 }
 
 /**
