@@ -88,26 +88,24 @@ char * * explode(const char * str, const char * delims, int * arrLen)
 		}
 	}
 
-	char * * exploded = malloc((num_delims+1) * sizeof(char *)); //2D array
+	char * * exploded = malloc((num_delims+1) * sizeof(char *)); //2D string array
 	int first = 0; //the beginning of a substring
 	int last = 0; //the end of a substring +1
 	int subsize; //the size of the substring
 
-	for (k = 0; k < num_delims; k++)
+	for (k = 0; k <= num_delims; k++)//iterates once more thant the number of delimiters
 	{
-		last = delims[k] + 1; //set last to the end of the first substring and include the delimiter
+		last = delim_indicies[k] + 1; //set last to the end of the first substring and include the delimiter
 		subsize = last - first; //use first and last to find the size of the substring
 
-		memcpy(* exploded[0][k], first, subsize); //copy the substring between first and last into the row k
+		exploded[k] = (char *) malloc(subsize * sizeof(char));
+		memcpy(exploded[k], &str[first], subsize);
 
-		exploded[subsize + 1][k] = '\0'; //give that substring a null terminator
-		first = last + 1; //move first to the area past the first delimiter
-
-
+		first = last + 1; //moves first to the index after the delimiter
 	}
 
 
-	return 0;
+	return exploded;
 }
 
 /**

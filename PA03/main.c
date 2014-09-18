@@ -19,6 +19,7 @@ void swapString(char ** a, char ** b)
 
 int main(int argc, char * * argv)
 {
+
     printf("Welcome to PA03.\n"
 	   "\n"
 	   "Please make sure that the swapString(...) function works\n"
@@ -42,6 +43,7 @@ int main(int argc, char * * argv)
     swapString(&str1, &str2);
     printf("After swap, str1* == %p (i.e., '%s'), "
 	   "str2* == %p (i.e., '%s')\n", str1, str1, str2, str2);
+    
 
     return EXIT_SUCCESS;
 }
