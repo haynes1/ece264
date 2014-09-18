@@ -21,10 +21,15 @@ int main (int argc, char * * argv)
 	printf("explode testing --------------------------------\n");
 	char * str3 = "This is Sparta mother!fuckers";
 	int arrLen = 0;
+	int i;
 	const char* delims = "! ";
 	printf("This is Sparta mother!fuckers, delims = ' ', and !\n");
 	char * * exploded = explode(str3, delims, &arrLen);
-	printf("%p\n", exploded); 
+	//printing
+	for (i = 0; i < arrLen; i++)
+	{
+		printf("%s\n", exploded[i]);
+	}
 
 
 	printf("\n");

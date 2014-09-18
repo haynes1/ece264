@@ -47,6 +47,7 @@ char * strcat_ex(char * * dest, int * n, const char * src)
 		strcat(* dest, src);
 		return * dest;
 	}
+	* n = strlen(* dest);
 }
 
 /**
@@ -93,7 +94,6 @@ char * * explode(const char * str, const char * delims, int * arrLen)
 		}
 	}
 
-	printf("num_delims = %s\n",num_delims );
 
 	char * * exploded = malloc((num_delims+1) * sizeof(char *)); //2D string array
 	int first = 0; //the beginning of a substring
@@ -102,19 +102,29 @@ char * * explode(const char * str, const char * delims, int * arrLen)
 
 	for (k = 0; k <= num_delims; k++)//iterates once more thant the number of delimiters
 	{
-		last = delim_indicies[k] + 1; //set last to the end of the first substring and include the delimiter
+		if (k != num_delims)// if this is not the last substring
+		{
+			last = delim_indicies[k];//set last to the end of the first substring and include the delimiter
+		}
+		else
+		{
+			last = strlen(str);
+		}
+
 		subsize = last - first; //use first and last to find the size of the substring
 
 		exploded[k] = (char *) malloc(subsize * sizeof(char));
 		memcpy(exploded[k], &str[first], subsize);
+		exploded[last+1] = '\0';
 
 		first = last + 1; //moves first to the index after the delimiter
 	}
 
 	//still must do the arrLen thing
+	* arrLen = num_delims + 1;
 
 
-	return 0;
+	return exploded;
 }
 
 /**
