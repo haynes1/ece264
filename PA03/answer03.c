@@ -174,8 +174,24 @@ char * implode(char * * strArr, int len, const char * glue)
  * Hint: use the <stdlib.h> function "qsort"
  * Hint: you must _clearly_ understand the typecasts.
  */
+int scompare(const void * a, const void * b);
+
+int scompare(const void * a, const void * b)
+{
+	// ptr1 and ptr2 are string *
+	// string is char * , thus ptr1 and ptr2 are char * *
+	const char * const * ptr1 = ( const char * *) a ;
+	const char * const * ptr2 = ( const char * *) b ;
+	const char * str1 = * ptr1 ; // type : string
+	const char * str2 = * ptr2;
+
+	return strcmp(str1, str2);
+}
+
 void sortStringArray(char * * arrString, int len)
 {
+	qsort(arrString, len, sizeof(char *), scompare);
+
 	return;
 }
 

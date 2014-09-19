@@ -35,7 +35,18 @@ int main (int argc, char * * argv)
 	printf("implode testing --------------------------------\n");
 	const char * glue = " GLUE ";
 	char * imploded = implode(exploded, arrLen, glue);
-	printf("%s\n", imploded );
+	printf("%s\n\n", imploded );
+
+	printf("sortStringArray testing --------------------------------\n");
+	int len = 5;
+	char * * message[len];
+	* message[1] = "Fuck";
+	* message[2] = "This";
+	* message[3] = "Shit";
+	* message[4] = "I am";
+	* message[5] = "Done";
+
+	sortStringArray(message, len);
 
 	printf("\n");
 	return EXIT_SUCCESS;
