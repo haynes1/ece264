@@ -178,14 +178,7 @@ int scompare(const void * a, const void * b);
 
 int scompare(const void * a, const void * b)
 {
-	// ptr1 and ptr2 are string *
-	// string is char * , thus ptr1 and ptr2 are char * *
-	const char * const * ptr1 = ( const char * *) a ;
-	const char * const * ptr2 = ( const char * *) b ;
-	const char * str1 = * ptr1 ; // type : string
-	const char * str2 = * ptr2;
-
-	return strcmp(str1, str2);
+	return strcmp((char *)a, (char *)b);
 }
 
 void sortStringArray(char * * arrString, int len)
@@ -229,5 +222,10 @@ void sortStringCharacters(char * str)
  */
 void destroyStringArray(char * * strArr, int len)
 {
+	int i;
+	for(i = 0; i < len; i++){
+		free(strArr[i]);
+	}
+	free(strArr);
 	return;
 }

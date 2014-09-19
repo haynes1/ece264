@@ -39,14 +39,33 @@ int main (int argc, char * * argv)
 
 	printf("sortStringArray testing --------------------------------\n");
 	int len = 5;
-	char * * message[len];
-	* message[1] = "Fuck";
-	* message[2] = "This";
-	* message[3] = "Shit";
-	* message[4] = "I am";
-	* message[5] = "Done";
+	int j;
+	char *  message[len];
+	 message[0] = "Fuck";
+	 message[1] = "This";
+	 message[2] = "Shit";
+	 message[3] = "I am";
+	 message[4] = "Done";
 
-	sortStringArray(message, len);
+	char ** msg = (char**)malloc(sizeof(char*)*len);
+	for(j = 0; j < len; j++){
+		msg[j] = (char*)malloc((strlen(message[j]) + 1) * sizeof(char));
+		msg[j] = strcpy(msg[j], message[j]);
+	}
+
+	for (j = 0; j < len; j++)
+	{
+		printf("%s\n", msg[j]);
+	}
+
+	printf("AFTER SORting\n");
+
+	sortStringArray(msg, len);
+	//printing
+	for (j = 0; j < len; j++)
+	{
+		printf("%s\n", msg[j]);
+	}
 
 	printf("\n");
 	return EXIT_SUCCESS;
