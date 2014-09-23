@@ -19,11 +19,11 @@ int main (int argc, char * * argv)
 	printf("\n");
 
 	printf("explode testing --------------------------------\n");
-	char * str3 = "This is Sparta mother!fuckers";
+	char * str3 = "This is Sparta!exploded";
 	int arrLen = 0;
 	int i;
 	const char* delims = "! ";
-	printf("This is Sparta mother!fuckers, delims = ' ', and !\n");
+	printf("This is Sparta!exploded, delims = ' ', and !\n");
 	char * * exploded = explode(str3, delims, &arrLen);
 	//printing
 	for (i = 0; i < arrLen; i++)
@@ -40,14 +40,14 @@ int main (int argc, char * * argv)
 	printf("sortStringArray testing --------------------------------\n");
 	int len = 5;
 	int j;
-	char *  message[len];
-	 message[0] = "Fuck";
-	 message[1] = "This";
-	 message[2] = "Shit";
-	 message[3] = "I am";
-	 message[4] = "Done";
+	char *  message[len];//creating an array of string literals which can't be modified
+	 message[0] = "I";
+	 message[1] = "Simply";
+	 message[2] = "Want";
+	 message[3] = "This";
+	 message[4] = "Sorted";
 
-	char ** msg = (char**)malloc(sizeof(char*)*len);
+	char ** msg = (char**)malloc(sizeof(char*)*len);//create an array of strings that aren't literals
 	for(j = 0; j < len; j++){
 		msg[j] = (char*)malloc((strlen(message[j]) + 1) * sizeof(char));
 		msg[j] = strcpy(msg[j], message[j]);
@@ -66,6 +66,12 @@ int main (int argc, char * * argv)
 	{
 		printf("%s\n", msg[j]);
 	}
+
+	printf("Sort String Characters Testing--------------------\n");
+	printf("\nBefore Sorting: %s\n", str3 );
+	sortStringCharacters(str3);
+	printf("After Sorting: %s\n", str3);
+
 
 	printf("\n");
 	return EXIT_SUCCESS;

@@ -132,7 +132,7 @@ char * * explode(const char * str, const char * delims, int * arrLen)
  * string, placing 'glue' between each successive element.
  *
  * strArr: an array of strings
- * len: the length of the array 'strArr'
+ * len: the length of the array 'strArr
  * glue: string to concatenate between each element of 'strArr'
  *
  * For example:
@@ -178,7 +178,17 @@ int scompare(const void * a, const void * b);
 
 int scompare(const void * a, const void * b)
 {
-	return strcmp((char *)a, (char *)b);
+	return strcmp(* (char * *)a, * (char * *)b);
+}
+
+int ccompare(const void * a, const void * b);
+
+int ccompare(const void * a, const void * b)
+{
+	const char * ac = (const char *) a;
+	const char * bc = (const char *) b;
+
+	return strcmp(ac, bc);
 }
 
 void sortStringArray(char * * arrString, int len)
@@ -203,6 +213,8 @@ void sortStringArray(char * * arrString, int len)
  */
 void sortStringCharacters(char * str)
 {
+	int len = strlen(str);
+	qsort(str, len, sizeof(char), ccompare);
 	return;
 }
 
