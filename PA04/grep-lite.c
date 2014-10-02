@@ -14,18 +14,8 @@ int main(int argc, char * * argv)
    int N_OP = FALSE;
    int Q_OP = FALSE;
    int ERR = FALSE;
-   char* PATTERN;
-   int MATCH = FALSE;
+   char * PATTERN;
    int exit_status = 1;
-
-   //test and set pattern to the last argument
-   if ((char)(*argv[argc-1]) == '-')//minus 1 because starts with index 0
-   {
-      ERR = TRUE;
-   }
-   else{
-      PATTERN = argv[argc-1];
-   }
 
 
    // Loop through the arguments, looking for switches
@@ -39,13 +29,26 @@ int main(int argc, char * * argv)
          N_OP = TRUE;
       else if(strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
          Q_OP = TRUE;
-      else {
-         ERR = TRUE; // best not to run if there's an error
+      else if (i == argc-1){//testing the last argument passed
+         if (argv[i][0] == '-'){
+         ERR = TRUE;
+         }
+         else{
+            PATTERN = malloc((strlen(argv[i]) + 1) * sizeof(char));
+            strcpy(PATTERN, argv[i]);
+            printf("%s\n", PATTERN );
+         }
+
+      }
+      else{
+         ERR = TRUE;
       }
    }
 
    if(ERR) {
       fprintf(stderr, "Error\n");
+      free(PATTERN);
+      exit_status = 2;
       return EXIT_FAILURE;
    }
 
@@ -80,14 +83,32 @@ int main(int argc, char * * argv)
             exit_status = 1;
          }
       }
-
-      if (V_OP && N_OP && strstr(buffer, PATTERN) == NULL)
+      //nonmatching mode, found nonmatching, and line number requested
+      else if (V_OP && N_OP && strstr(buffer, PATTERN) == NULL)
       {
-         /* code */
+         printf("%d: %s\n", line_num, buffer);//print w/ line number
+         exit_status = 1;
       }
-
+      //looking for nonmatching, found nonmatching, no line number requested
+      else if (V_OP && strstr(buffer, PATTERN) == NULL )
+      {
+         printf("%s\n", buffer);//prints without line number
+         exit_status = 1;
+      }
+      //looking for matching, found matching, line number requested
+      else if (V_OP == FALSE && N_OP && strstr(buffer, PATTERN) != NULL)
+      {
+         printf("%d: %s\n", line_num, buffer);//print with line number
+         exit_status = 1;
+      }
+      //looking for matching, found matching
+      else if (V_OP == FALSE && strstr(buffer, PATTERN) != NULL)
+      {
+         printf("%s\n", buffer );
+         exit_status = 1;
+      }
+      line_num++;
    }
-
-
+   free(PATTERN);
    return EXIT_SUCCESS;
 }
