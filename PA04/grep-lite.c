@@ -36,7 +36,6 @@ int main(int argc, char * * argv)
          else{
             PATTERN = malloc((strlen(argv[i]) + 1) * sizeof(char));
             strcpy(PATTERN, argv[i]);
-            printf("%s\n", PATTERN );
          }
 
       }
@@ -76,39 +75,39 @@ int main(int argc, char * * argv)
       if (Q_OP){ //quiet mode
          if (V_OP && strstr(buffer, PATTERN) == NULL)//looking for non matching and find a nonmatching
          {
-            exit_status = 1;
+            exit_status = 0;
          }
          else if (strstr(buffer, PATTERN))//looking for matching and find matching
          {
-            exit_status = 1;
+            exit_status = 0;
          }
       }
       //nonmatching mode, found nonmatching, and line number requested
       else if (V_OP && N_OP && strstr(buffer, PATTERN) == NULL)
       {
          printf("%d: %s\n", line_num, buffer);//print w/ line number
-         exit_status = 1;
+         exit_status = 0;
       }
       //looking for nonmatching, found nonmatching, no line number requested
       else if (V_OP && strstr(buffer, PATTERN) == NULL )
       {
          printf("%s\n", buffer);//prints without line number
-         exit_status = 1;
+         exit_status = 0;
       }
       //looking for matching, found matching, line number requested
       else if (V_OP == FALSE && N_OP && strstr(buffer, PATTERN) != NULL)
       {
          printf("%d: %s\n", line_num, buffer);//print with line number
-         exit_status = 1;
+         exit_status = 0;
       }
       //looking for matching, found matching
       else if (V_OP == FALSE && strstr(buffer, PATTERN) != NULL)
       {
          printf("%s\n", buffer );
-         exit_status = 1;
+         exit_status = 0;
       }
       line_num++;
    }
    free(PATTERN);
-   return EXIT_SUCCESS;
+   return exit_status;
 }
