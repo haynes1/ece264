@@ -15,26 +15,27 @@ int main(int argc, char * * argv)
    int Q_OP = FALSE;
    int ERR = FALSE;
    char* PATTERN;
-
-   if ((char)(*argv[argc]) == '-')
+   int MATCH = FALSE;
+   //test and set pattern to the last argument
+   if ((char)(*argv[argc-1]) == '-')//minus 1 because starts with index 0
    {
       ERR = TRUE;
    }
    else{
-      PATTERN = argv[argc];
+      PATTERN = argv[argc-1];
    }
 
 
-   // Loop through the arguments, looking for our switches...
-   int ind = 1; // we always skip 0, which is the program path
-   for( ; ind < argc; ++ind) {
-      if(strcmp(argv[ind], "--help") == 0) 
+   // Loop through the arguments, looking for switches
+   int i; // we always skip 0, which is the program path
+   for(i = 1 ; i < argc; ++i) {
+      if(strcmp(argv[i], "--help") == 0) 
          showHelp = TRUE;
-      else if(strcmp(argv[ind], "-v") == 0)
+      else if(strcmp(argv[i], "-v") == 0)
          V_OP = TRUE;
-      else if(strcmp(argv[ind], "-i") == 0)
+      else if(strcmp(argv[i], "-n") == 0)
          N_OP = TRUE;
-      else if(strcmp(argv[ind], "-i") == 0)
+      else if(strcmp(argv[i], "-q") == 0)
          Q_OP = TRUE;
       else {
          ERR = TRUE; // best not to run if there's an error
@@ -61,12 +62,13 @@ int main(int argc, char * * argv)
       return EXIT_SUCCESS;
    }
 
-   char * buffer = malloc(SIZE * sizeof(char));
+   char * buffer = malloc(SIZE * sizeof(char));//allocate space for a line
+   char c = 'a';
+
    if (buffer != NULL)
    {
-      while(fgetc(stdin) != EOF){//go till end of file
-         while(fgetc(stdin) != \n)//go till a new line
-      }
+       fgets(buffer, SIZE, stdin);
+
    }
 
 
