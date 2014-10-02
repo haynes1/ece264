@@ -28,6 +28,12 @@ int main(int argc, const char** argv)
          char a;
          FILE * fil;
          fil = fopen(argv[i], "r");
+         //failed to open file
+         if (fil == NULL)
+         {
+            fprintf(stderr, "cat cannot open %s\n", argv[i]);
+            return EXIT_FAILURE;
+         }
          while ((a = fgetc(fil)) != EOF){//while we're not at the EOF
             fputc(a, stdout);// put a in the command line
          }
