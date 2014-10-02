@@ -16,6 +16,8 @@ int main(int argc, char * * argv)
    int ERR = FALSE;
    char* PATTERN;
    int MATCH = FALSE;
+   int exit_status = 1;
+
    //test and set pattern to the last argument
    if ((char)(*argv[argc-1]) == '-')//minus 1 because starts with index 0
    {
@@ -31,11 +33,11 @@ int main(int argc, char * * argv)
    for(i = 1 ; i < argc; ++i) {
       if(strcmp(argv[i], "--help") == 0) 
          showHelp = TRUE;
-      else if(strcmp(argv[i], "-v") == 0)
+      else if(strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--invert-match") == 0)
          V_OP = TRUE;
-      else if(strcmp(argv[i], "-n") == 0)
+      else if(strcmp(argv[i], "-n") == 0 || strcmp(argv[i], "--line-number") == 0)
          N_OP = TRUE;
-      else if(strcmp(argv[i], "-q") == 0)
+      else if(strcmp(argv[i], "-q") == 0 || strcmp(argv[i], "--quiet") == 0)
          Q_OP = TRUE;
       else {
          ERR = TRUE; // best not to run if there's an error
@@ -62,12 +64,27 @@ int main(int argc, char * * argv)
       return EXIT_SUCCESS;
    }
 
-   char * buffer = malloc(SIZE * sizeof(char));//allocate space for a line
-   char c = 'a';
+   char buffer[SIZE];
 
-   if (buffer != NULL)
-   {
-       fgets(buffer, SIZE, stdin);
+   int line_num = 1; //holds the line number starting with one
+
+   while(fgets(buffer, SIZE, stdin)){
+
+      if (Q_OP){ //quiet mode
+         if (V_OP && strstr(buffer, PATTERN) == NULL)//looking for non matching and find a nonmatching
+         {
+            exit_status = 1;
+         }
+         else if (strstr(buffer, PATTERN))//looking for matching and find matching
+         {
+            exit_status = 1;
+         }
+      }
+
+      if (V_OP && N_OP && strstr(buffer, PATTERN) == NULL)
+      {
+         /* code */
+      }
 
    }
 
