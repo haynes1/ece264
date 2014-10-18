@@ -30,6 +30,32 @@ void appendLocation(int * r, int * c, int d){
 	}
 }
 
+int printDir(int d, int i){
+	int opposite; 
+	if (d == NORTH)
+	{
+		printf("N %d\n", i);
+		opposite = SOUTH;
+	}
+	if (d == EAST)
+	{
+		printf("E %d\n", i);
+		opposite = WEST;
+	}
+	if (d == SOUTH)
+	{
+		printf("S %d\n", i);
+		opposite = NORTH;
+	}
+	if (d == WEST)
+	{
+		printf("W %d\n", i);
+		opposite = EAST;
+	}
+	return opposite;
+}
+
+
 //returns whether or not the current space is a dead end, intersection, or hallway
 int spaceType(int x, int y, int d, char ** maze, int w, int h){
 	//test all adjacent spaces
@@ -71,59 +97,24 @@ int spaceType(int x, int y, int d, char ** maze, int w, int h){
 //moves in direction d
 void moveDirection(int x, int y, int d, char ** maze, int w, int h){
 	int type = HALLWAY;//holds the type of the current point (HALLWAY to start the loop)
-	int i = 1; //for the first move
+	int i = 0; //for the first move
 	int a = x;
 	int b = y;
 	while(type == HALLWAY){
 		appendLocation(&a, &b, d);
 		type = spaceType(a, b, d, maze, w, h);
-		printf("current location: (%d, %d) and type: %d\n",a, b, type );
 		i++;
 	}
-	if (d == NORTH)
-	{
-		printf("N %d\n", i);
-		d = SOUTH;
-	}
-	if (d == EAST)
-	{
-		printf("E %d\n", i);
-		d = WEST;
-	}
-	if (d == SOUTH)
-	{
-		printf("S %d\n", i);
-		d = NORTH;
-	}
-	if (d == WEST)
-	{
-		printf("W %d\n", i);
-		d = EAST;
-	}
+	//print direction
+	int opposite;
+	opposite = printDir(d, i);
+
 	//if the type is an intersection
 
-	//print the opposite direction
-	if (d == NORTH)
-	{
-		printf("N %d\n", i);
-		d = SOUTH;
-	}
-	if (d == EAST)
-	{
-		printf("E %d\n", i);
-		d = WEST;
-	}
-	if (d == SOUTH)
-	{
-		printf("S %d\n", i);
-		d = NORTH;
-	}
-	if (d == WEST)
-	{
-		printf("W %d\n", i);
-		d = EAST;
-	}
+	//print opposite direction to return to previous intersection
+	d = printDir(opposite, i);
 }
+
 
 
 void print_directions(char** maze, int w, int h);

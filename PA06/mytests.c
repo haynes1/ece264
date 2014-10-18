@@ -52,7 +52,7 @@ int main(int argc, char * * argv){
 	printf("the type is: %d\n", type);
 
 	printf("---------------------Testing moveDirection----------------------\n");
-	moveDirection(0, 2, d, maze, 5, 5);
+	moveDirection(0, 1, d, maze, 5, 5);
 
 	return EXIT_SUCCESS;
 }
