@@ -30,6 +30,17 @@ void appendLocation(int * r, int * c, int d){
 	}
 }
 
+int findOpposite(int d){
+	if (d == NORTH || d == EAST)
+	{
+		return (d+2);
+	}
+	else
+	{
+		return(d-2);
+	}
+}
+
 int printDir(int d, int i){
 	int opposite; 
 	if (d == NORTH)
@@ -97,7 +108,7 @@ int spaceType(int x, int y, int d, char ** maze, int w, int h){
 //moves in direction d
 void moveDirection(int x, int y, int d, char ** maze, int w, int h){
 	int type = HALLWAY;//holds the type of the current point (HALLWAY to start the loop)
-	int i = 0; //for the first move
+	int i = 0; 
 	int a = x;
 	int b = y;
 	while(type == HALLWAY){
@@ -113,6 +124,17 @@ void moveDirection(int x, int y, int d, char ** maze, int w, int h){
 
 	//print opposite direction to return to previous intersection
 	d = printDir(opposite, i);
+}
+
+void atIntersection(int x, int y, int d, char ** maze, int w, int h){
+	int i;
+	for(i = NORTH; i <= WEST; i++)//iterate through all directions
+	{
+		if (findOpposite(i) != d)//ensure that I don't go back in the direction I came from
+		{
+			moveDirection(x, y, i, maze, w, h);//move in all directions except the the direction I came from
+		}
+	}
 }
 
 

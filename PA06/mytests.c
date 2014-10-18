@@ -52,7 +52,21 @@ int main(int argc, char * * argv){
 	printf("the type is: %d\n", type);
 
 	printf("---------------------Testing moveDirection----------------------\n");
+	printf("starting point: (0, 1)\n");
 	moveDirection(0, 1, d, maze, 5, 5);
+
+	printf("---------------------Testing atIntersection-----------------------\n");
+	maze[0] = "XX XX";
+	maze[1] = "XX XX";
+	maze[2] = "     ";
+	maze[3] = "XX XX";
+	maze[4] = "XX XX";
+	//printing the maze
+	for (i = 0; i < 5; i++)
+	{
+		printf("%s\n", maze[i]);
+	}
+	atIntersection(2,2,d,maze,5,5);
 
 	return EXIT_SUCCESS;
 }
