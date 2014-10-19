@@ -12,7 +12,7 @@
 
 int main(int argc, char * * argv){
 	printf("\n-------------------------Testing Time--------------------------\n");
-	int x = 2;
+/*	int x = 2;
 	int y = 2;
 	int d = SOUTH;
 
@@ -20,14 +20,14 @@ int main(int argc, char * * argv){
 	printf("current location: (%d, %d)\n", x, y);
 	appendLocation(&x, &y, d);
 	printf("new location: (%d, %d)\n", x, y);
-
+*/
 	//building a testing maze for spaceType
 	char ** maze = malloc(5 * sizeof(char *));
 	int i;
 	for (i = 0; i < 5; i++)
 	{
 		maze[i] = malloc(5 * sizeof(char));
-	}
+	}/*
 	maze[0] = "X X X";
 	maze[1] = "X X X";
 	maze[2] = "X   X";
@@ -56,17 +56,20 @@ int main(int argc, char * * argv){
 	moveDirection(0, 1, d, maze, 5, 5);
 
 	printf("---------------------Testing atIntersection-----------------------\n");
-	maze[0] = "XX XX";
-	maze[1] = "XX XX";
-	maze[2] = "     ";
-	maze[3] = "XX XX";
-	maze[4] = "XX XX";
+*/	maze[0] = "XXX X";
+	maze[1] = "X   X";
+	maze[2] = "XXX X";
+	maze[3] = "X   X";
+	maze[4] = "XXX X";
 	//printing the maze
 	for (i = 0; i < 5; i++)
 	{
 		printf("%s\n", maze[i]);
 	}
-	atIntersection(2,2,d,maze,5,5);
+	//atIntersection(2,2,SOUTH,maze,5,5);
+
+	printf("---------------------Testing Full----------------------\n");
+	print_directions(maze, 5, 5);
 
 	return EXIT_SUCCESS;
 }

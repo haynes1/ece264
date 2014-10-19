@@ -91,7 +91,7 @@ int spaceType(int x, int y, int d, char ** maze, int w, int h){
 	a = x;
 	b = y;
 	appendLocation(&a, &b, d); //a and b are now in the next space given by direction d
-	if (a >= h || b >= w || (open == 1 && maze[a][b] == 'X' ))//the space is a dead end, or the next space in d is an edge
+	if (a >= h || a < 0 || b < 0 || b >= w || (open == 1 && maze[a][b] == 'X' ))//the space is a dead end or edge
 	{
 		return DEAD;
 	}
@@ -104,6 +104,7 @@ int spaceType(int x, int y, int d, char ** maze, int w, int h){
 		return INTERSECTION;
 	}
 }
+void atIntersection(int x, int y, int d, char ** maze, int w, int h);
 
 //moves in direction d
 void moveDirection(int x, int y, int d, char ** maze, int w, int h){
@@ -121,6 +122,10 @@ void moveDirection(int x, int y, int d, char ** maze, int w, int h){
 	opposite = printDir(d, i);
 
 	//if the type is an intersection
+	if (type == INTERSECTION)
+	{
+		atIntersection(a, b, d, maze, w, h);
+	}
 
 	//print opposite direction to return to previous intersection
 	d = printDir(opposite, i);
@@ -128,15 +133,42 @@ void moveDirection(int x, int y, int d, char ** maze, int w, int h){
 
 void atIntersection(int x, int y, int d, char ** maze, int w, int h){
 	int i;
+	int a;
+	int b;
 	for(i = NORTH; i <= WEST; i++)//iterate through all directions
 	{
 		if (findOpposite(i) != d)//ensure that I don't go back in the direction I came from
 		{
-			moveDirection(x, y, i, maze, w, h);//move in all directions except the the direction I came from
+			a = x;
+			b = y;
+			appendLocation(&a, &b, i);
+			if (maze[a][b] != 'X')//the direction doesn't lead into a wall
+			{
+				moveDirection(x, y, i, maze, w, h);//move in all directions except the the direction I came from
+			}
 		}
 	}
 }
 
 
-
-void print_directions(char** maze, int w, int h);
+void print_directions(char** maze, int w, int h){
+	//find the start of the maze
+	int i = 0;
+	int j = 0;
+	while(maze[0][i] != ' ')
+	{
+		i++;
+	}
+	printf("the entrance is location (0, %d\n", i);
+	//move south until an intersection
+	int a = 0;
+	int b = i;
+	int type = HALLWAY;
+	while(type == HALLWAY){
+		appendLocation(&a, &b, SOUTH);
+		type = spaceType(a, b, SOUTH, maze, w, h);
+		j++;
+	}
+	printDir(SOUTH, j);
+	atIntersection(a, b, SOUTH, maze, w, h);
+}
