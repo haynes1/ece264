@@ -87,7 +87,7 @@ Image * Image_load(const char * filename){
 		tmp_im = malloc(sizeof(Image));			
 
 		//allocate memory for comment
-		tmp_comment = malloc(sizeof(char) * header.comment_len);
+		tmp_comment = malloc(sizeof(char) * (header.comment_len));//segfault potential here
 		
 		//allocate memory for pixel data
 		int * rawece264;
@@ -130,9 +130,45 @@ Image * Image_load(const char * filename){
  * Hint: Please see the README for extensive hints
  */
 int Image_save(const char * filename, Image * image){
+	int err = FALSE; //unless otherwise stated
+	FILE * fp = NULL;
+	size_t written = 0;
 
-	return 0;
+	//opening the file for writing
+	fp = fopen(filename, "wb");
+    if(fp == NULL) {
+		fprintf(stderr, "Failed to open '%s' for writing\n", filename);
+		return FALSE; // No file ==> out of here.
+    }
 
+    //making the header
+    ImageHeader imagehead;
+    imagehead.magic_number = ECE264_IMAGE_MAGIC_NUMBER;
+    imagehead.width = image->width;
+    imagehead.height = image->height;
+    int commentlen = strlen(image->comment);
+    imagehead.comment_len = commentlen;
+
+    //writing the header
+    if(!err) {
+		written = fwrite(&imagehead, sizeof(ImageHeader), 1, fp);
+		if(written != 1) {
+	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(BMP_Header), filename);
+	    	err = TRUE;	
+		}
+    }
+
+    //write pixels
+    if(!err){
+    	uint8_t * data_ptr = image->data;
+    	written = fwrite(data_ptr, sizeof(uint8_t), (imagehead.width * imagehead.height), fp);
+    	if(written != 1) {
+	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(BMP_Header), filename);
+	    	err = TRUE;	
+		}
+    }
+
+    return !err;
 }
 
 /**
@@ -145,6 +181,10 @@ int Image_save(const char * filename, Image * image){
  * report an error. 
  */
 void Image_free(Image * image){
+
+    free(image->comment);
+    free(image->data);
+    free(image);
 
 	return;
 }
