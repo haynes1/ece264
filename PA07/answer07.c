@@ -50,10 +50,10 @@ Image * Image_load(const char * filename){
 
     FILE * fp = NULL;
     size_t read;
+    size_t n_bytes = 0;
     ImageHeader header;
     Image * tmp_im = NULL, * im = NULL;
     int err = FALSE;
-    char * tmp_comment;
 
     //opening the file
     if(!err) {
@@ -69,15 +69,15 @@ Image * Image_load(const char * filename){
 		read = fread(&header, sizeof(ImageHeader), 1, fp);
 		if(read != 1) {
 	    	fprintf(stderr, "Failed to read header from '%s'\n", filename);
-	    	err = TRUE;
+	    	err = 2;
 		}
     }
 
     //checking the header for correct magic number and width/height values, and comment length
-    if(!err) { // We're only interested in a subset of valid bmp files
+    if(!err) {
 		if(!checkValid(&header)) {
 	    	fprintf(stderr, "Invalid header in '%s'\n", filename);
-	    	err = TRUE;
+	    	err = 3;
 		}
     }
 
@@ -87,39 +87,77 @@ Image * Image_load(const char * filename){
 		tmp_im = malloc(sizeof(Image));			
 
 		//allocate memory for comment
-		tmp_comment = malloc(sizeof(char) * (header.comment_len));//segfault potential here
+		tmp_im->comment = malloc(sizeof(char) * (header.comment_len));//segfault potential here
 		
 		//allocate memory for pixel data
-		int * rawece264;
-        rawece264 = (int*) malloc((header.height*sizeof(int)) * (header.width*sizeof(int)));
+		n_bytes = sizeof(uint8_t) * header.width * header.height;
+		tmp_im->data = malloc(n_bytes);
+		if(tmp_im->data == NULL) {
+	    	fprintf(stderr, "Failed to allocate %zd bytes for image data\n", n_bytes);
+	    	err = 4;
+		}
    		
    		//test memory allocation
-   		if(tmp_im == NULL || tmp_comment == NULL || rawece264 == NULL) {
+   		if(tmp_im == NULL || tmp_im->comment == NULL || tmp_im->data == NULL) {
 	    	fprintf(stderr, "Failed to allocate im structure\n");
-	    	err = TRUE;
+	    	err = 5;
 		} 
 
     }
 
+    if(!err) { // Init the Image struct
+	tmp_im->width = header.width;
+	tmp_im->height = header.height;
+	}
+
     //read the comment
     if(!err){ 
-		fread(tmp_comment, sizeof(char), header.comment_len, fp);
+		fread(tmp_im->comment, sizeof(char), header.comment_len, fp);
     }
 
     //checking the comment
-    int tmp_comment_len = strlen(tmp_comment);
-    if (tmp_comment[tmp_comment_len + 1] == '\0' || tmp_comment_len != header.comment_len){ //potential seg fault here
-    	err = TRUE;
-    }
+    if(!err){
+    	int tmp_comment_len = strlen(tmp_im->comment);
+    	char comment_end = tmp_im->comment[tmp_comment_len-1];
+    	if (comment_end == '\0'){ //potential seg fault here
+    		err = 6;
+    	}
+    	if( (tmp_comment_len + 1) != header.comment_len){
+    		err = 7;
+    	}
+	}
 
     //read pixel data
     if(!err){
-    	fread(tmp_comment, sizeof(int), (header.height * header.width), fp);
+    	fread(tmp_im->data, sizeof(int), (header.height * header.width), fp);
     }
 
     //ensure all pixel data was read and that there are no trailing bytes
+    if(!err) { // We should be at the end of the file now
+		uint8_t byte;
+		read = fread(&byte, sizeof(uint8_t), 1, fp);
+		if(read != 0) {
+	    	fprintf(stderr, "Stray bytes at the end of bmp file '%s'\n", filename);
+	    	err = 8;
+		}
+    }
 
+    //put it all into im
+    if(!err) {
+		im = tmp_im;  
+		tmp_im = NULL; // and not cleaned up
+    }
 
+    // Cleanup
+    if(tmp_im != NULL) {
+		free(tmp_im->comment); // Remember, you can always free(NULL)
+		free(tmp_im->data);
+		free(tmp_im);
+    }
+
+    if(fp) {
+		fclose(fp);
+    }
     return im;
 }
 
@@ -151,18 +189,21 @@ int Image_save(const char * filename, Image * image){
 
     //writing the header
     if(!err) {
+    	//writing head
 		written = fwrite(&imagehead, sizeof(ImageHeader), 1, fp);
 		if(written != 1) {
-	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(BMP_Header), filename);
+	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(ImageHeader), filename);
 	    	err = TRUE;	
 		}
+		//writing comment
+		written = fwrite(image->comment, sizeof(char), commentlen + 1, fp);
     }
 
     //write pixels
     if(!err){
     	uint8_t * data_ptr = image->data;
     	written = fwrite(data_ptr, sizeof(uint8_t), (imagehead.width * imagehead.height), fp);
-    	if(written != 1) {
+    	if(written != (imagehead.width * imagehead.height)) {
 	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(BMP_Header), filename);
 	    	err = TRUE;	
 		}
@@ -193,20 +234,46 @@ void Image_free(Image * image){
  * Performs linear normalization, see README
  */
 void linearNormalization(int width, int height, uint8_t * intensity){
+	int min = 300;
+	int max = 0;
+	int i;
+	//finding min value
+	for (i = 0; i <= (width * height); i++)
+	{
+		if (intensity[i] < min)
+		{
+			min = intensity[i];
+		}
+	}
+	//finding max value
+	for (i = 0; i <= (width * height); i++)
+	{
+		if (intensity[i] > max)
+		{
+			max = intensity[i];
+		}
+	}
+	//normalize
+	for (i = 0; i <= (width * height); i++)
+	{
+		intensity[i] = (intensity[i] - min) * 255.0 / (max - min);
+	}
+
+
+	//printf("min = %d, max = %d\n", min , max);
 
 	return;
-
 }
 
 static int checkValid(ImageHeader * header){
 	//Ensure that the magic_number in the header is correct
-	if (header->magic_number != BMP_MAGIC_NUMBER) return FALSE;
+	if (header->magic_number != ECE264_IMAGE_MAGIC_NUMBER) return FALSE;
 
 	//Ensure that neither the width nor height is zero
 	if (header->width == 0 || header->height == 0) return FALSE;
 
 	//Ensure that there is a comment
-	if(header->comment_len <= 2) return FALSE;
+	if(header->comment_len <= 1) return FALSE;
 
 	return TRUE;
 }
