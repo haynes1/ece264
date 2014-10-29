@@ -87,7 +87,7 @@ Image * Image_load(const char * filename){
 		tmp_im = malloc(sizeof(Image));			
 
 		//allocate memory for comment
-		tmp_im->comment = malloc(sizeof(char) * (header.comment_len));//segfault potential here
+		tmp_im->comment = malloc(sizeof(char) * (header.comment_len));//comment_len includes null terminator
 		
 		//allocate memory for pixel data
 		n_bytes = sizeof(uint8_t) * header.width * header.height;
@@ -129,13 +129,13 @@ Image * Image_load(const char * filename){
 
     //read pixel data
     if(!err){
-    	fread(tmp_im->data, sizeof(int), (header.height * header.width), fp);
+    	fread(tmp_im->data, sizeof(uint8_t), (header.height * header.width), fp);
     }
 
     //ensure all pixel data was read and that there are no trailing bytes
     if(!err) { // We should be at the end of the file now
 		uint8_t byte;
-		read = fread(&byte, sizeof(uint8_t), 1, fp);
+		read = fread(&byte, sizeof(int), 1, fp);
 		if(read != 0) {
 	    	fprintf(stderr, "Stray bytes at the end of bmp file '%s'\n", filename);
 	    	err = 8;
@@ -204,10 +204,11 @@ int Image_save(const char * filename, Image * image){
     	uint8_t * data_ptr = image->data;
     	written = fwrite(data_ptr, sizeof(uint8_t), (imagehead.width * imagehead.height), fp);
     	if(written != (imagehead.width * imagehead.height)) {
-	    	fprintf(stderr, "Error: only wrote %zd of %zd of file header to '%s'\n", written, sizeof(BMP_Header), filename);
+	    	fprintf(stderr, "Error: only wrote %zd of %zd of pixels to '%s'\n", written, sizeof(BMP_Header), filename);
 	    	err = TRUE;	
 		}
     }
+    fclose(fp);
 
     return !err;
 }
@@ -238,7 +239,7 @@ void linearNormalization(int width, int height, uint8_t * intensity){
 	int max = 0;
 	int i;
 	//finding min value
-	for (i = 0; i <= (width * height); i++)
+	for (i = 0; i < (width * height); i++)
 	{
 		if (intensity[i] < min)
 		{
@@ -246,7 +247,7 @@ void linearNormalization(int width, int height, uint8_t * intensity){
 		}
 	}
 	//finding max value
-	for (i = 0; i <= (width * height); i++)
+	for (i = 0; i < (width * height); i++)
 	{
 		if (intensity[i] > max)
 		{
@@ -254,13 +255,10 @@ void linearNormalization(int width, int height, uint8_t * intensity){
 		}
 	}
 	//normalize
-	for (i = 0; i <= (width * height); i++)
+	for (i = 0; i < (width * height); i++)
 	{
 		intensity[i] = (intensity[i] - min) * 255.0 / (max - min);
 	}
-
-
-	//printf("min = %d, max = %d\n", min , max);
 
 	return;
 }
