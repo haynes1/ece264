@@ -1,6 +1,7 @@
 #include "answer05.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 //returns the number of partitions for a given n
 int nParts(int n){
@@ -18,81 +19,73 @@ int nParts(int n){
 	return sum;
 }
 
-void recurTime (int value, int * * buffer, int column){
+void findParts(int value, int ** grid, int r, int c){
 
-	int i;
-	int j;
-	int c = 0;
-	int k = 0;
-
-	if (value == 0) //base case
+	//base cases(0)
+	if (value == 0)
 	{
 		return;
 	}
-
-	for (i = 1; i <= value; i++) //doing it! iterating 1 - (value-1)
+	else if (value == 1)
 	{
-		for (j = c; j < (nParts(value - i) + c); j++) //puts the numbers in front of the next call of recurTime
-		{
-			buffer[j][column] = i;
-			k++;//keeping track of which row we are on
-		}
-		c = k;//the next time the above loop iterates it will start with our current row
-		if (i == value)
-		{
-			buffer[c - 1][column] = value;
-		}
+		grid[r][c] = 1;
+		return;
 	}
 
+	//non base cases
+	int i;
+	int j;
+	int a;
+	int crow = 0;
+	for (i = 1; i <= value; i++)
+	{
+		for (j = 0; j < nParts(value - i); j++)
+		{
+			grid[r+crow][c] = i;
+			crow ++;//this increments with the total j's moved and allows me to keep track of rows (j resets to 0 all the time)
+		}
+	}
+	//recursion time
+	int newval;
+	int rcurrow = r;
+	int rcurcol = c+1; //move over one column
+	for (a = 0; a < value-1; a++)
+	{
+		newval = value-1-a;
+		findParts(newval, grid, rcurrow, rcurcol);
+		rcurrow += nParts(newval);
+	}
+
+	return;
 }
+
 
 void partitionAll(int value){
 
-	int * * buffer; //make and dynamically allocate array
-    buffer = (int * *) malloc(nParts(value) * sizeof(int *));
-    int i;
-    for (i = 0; i < nParts(value); i++)
-    {
-        buffer[i] = (int *) malloc(value * sizeof(int));
-    }
-
+	//allocating space for array (value x value)
 	int a;
-	int b;
-	//int x, j; 
-	//int k = 0; 
-	//int c = 0;
-	//int recur = 0;
-	
-	for (a = 0; a < nParts(value); a++)//setting array to 0
+	int numP;
+	numP = nParts(value);
+	int ** grid = malloc(numP * sizeof(int *)); //nparts(value)rows
+	for (a = 0; a < numP; a++)
 	{
-		for (b = 0; b < value; b++)
-		{
-			buffer[a][b] = 0;
-		}
+		grid[a] = malloc(value* sizeof(int));//value colums
 	}
 
-	recurTime(value, buffer, 0);
+	//calling findParts recursively
+	findParts(value, grid, 0, 0);
 
-	/*for (x = 1; x <= value; x++) //doing it! iterating 1 - (value-1)
+	//printing the grid
+	int b;
+	int z;
+	for (b = 0; b < nParts(value); b++)
 	{
-		for (j = c; j < (nParts(value - x) + c); j++) //puts the numbers in front of the next call
+		for (z = 0; z < value; z++)
 		{
-			buffer[j][recur] = x;
-			k++;//keeping track of which row we are on
-		}
-		c = k;//the next time the above loop iterates it will start with our current row
-		if (x == value)
-		{
-			buffer[c][recur] = value;
-		}
-
-	} */
-
-	for (a = 0; a < nParts(value); a++)//printing the  array
-	{
-		for (b = 0; b < value; b++)
-		{
-			printf("%d, ", buffer[a][b]);
+			if (grid[b][z] <= value)//the test to see if it gets printed
+			{
+				printf("%d ", grid[b][z]);
+			}
 		}
 		printf("\n");
 	}
