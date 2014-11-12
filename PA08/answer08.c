@@ -16,11 +16,13 @@ List * List_createNode(const char * str){
 	return nd;
 }
 
-List * List_insert(List * head, char * str){
-	List * ptr = List_createNode(str); //create the node
-	ptr -> next = head; //insert at beginning
-	return ptr;
-
+List * List_insert(List * head, List * add){
+	if (head == NULL)
+	{
+		return add;
+	}
+	head -> next = List_insert(head -> next, add);
+	return head;
 }
 
 /**
@@ -56,6 +58,17 @@ int List_length(List * list){
 	return len;
 }
 
+void List_print(List * head)
+{
+   printf ("\nPrint the whole list :\n");
+   while ( head != NULL )
+   {
+      printf ("%s " , head -> str );
+      head = head -> next;
+   }
+   printf ("\n \n");
+}
+
 /**
  * Merge two sorted lists to produce a final sorted list.
  * 
@@ -84,31 +97,41 @@ int List_length(List * list){
  */
 List * List_merge(List * lhs, List * rhs, int (*compar)(const char *, const char*)){
 
-	List * newlist = NULL;
-	List * newhead = newlist; //keep the head of newlist
-	int lhslen = List_length(lhs);
-	List * lhsused = lhs; //keep the head of lhs
-	List * rhsused = rhs; //keep the head of rhs
+	List ** head = NULL;
+	List * hh = NULL;
+	int i = 0;
 
-	while(lhsused != NULL || rhsused != NULL){
-		//append the next node of lhs to newlist
-		if (compar(lhsused -> str, rhsused -> str) >= 0 || rhsused == NULL)
+	while(lhs != NULL && rhs != NULL && i <10){
+		printf("iteration # %d, and comparison between %s and %s = %d\n", i, lhs->str, rhs->str, compar(lhs->str,rhs->str) );
+		if (lhs != NULL)
 		{
-			newlist = lhsused;
-			lhsused = lhsused -> next; //move to next node in lhs
-			newlist = newlist -> next; //move to next node
-
+			if (rhs == NULL ||compar(lhs->str,rhs->str) <= 0)
+			{	
+				head = &lhs;
+				printf("added string : %s from left\n", (*head) ->str );
+				(*head) = (*head) -> next;
+				if (i == 0)
+				{
+					hh = *head;
+				}
+			}
 		}
-		//append the next node of rhs to newlist
-		else if (compar(lhsused -> str, rhsused -> str) <= 0 || lhsused == NULL)
-		{
-			newlist = rhsused; 
-			rhsused = rhsused -> next; //move to next node in rhs
-			newlist = newlist -> next; //move to next node
-		}
+			if (lhs == NULL || compar(lhs->str,rhs->str) > 0)
+			{
+				head = &rhs;
+				printf("added string : %s from right\n", (*head) ->str );
+				(*head) = (*head) -> next;
+				if (i == 0)
+				{
+					hh = *head;
+				}
+			}
+		i++;
 	}
+	List_print(hh);
 
-	return newhead;
+
+	return hh;
 }
 
 /** 
