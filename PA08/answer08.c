@@ -97,41 +97,24 @@ void List_print(List * head)
  */
 List * List_merge(List * lhs, List * rhs, int (*compar)(const char *, const char*)){
 
-	List ** head = NULL;
-	List * hh = NULL;
-	int i = 0;
+	List * head = NULL;
+	List ** current = &head;
 
-	while(lhs != NULL && rhs != NULL && i <10){
-		printf("iteration # %d, and comparison between %s and %s = %d\n", i, lhs->str, rhs->str, compar(lhs->str,rhs->str) );
-		if (lhs != NULL)
-		{
-			if (rhs == NULL ||compar(lhs->str,rhs->str) <= 0)
-			{	
-				head = &lhs;
-				printf("added string : %s from left\n", (*head) ->str );
-				(*head) = (*head) -> next;
-				if (i == 0)
-				{
-					hh = *head;
-				}
-			}
-		}
-			if (lhs == NULL || compar(lhs->str,rhs->str) > 0)
-			{
-				head = &rhs;
-				printf("added string : %s from right\n", (*head) ->str );
-				(*head) = (*head) -> next;
-				if (i == 0)
-				{
-					hh = *head;
-				}
-			}
-		i++;
-	}
-	List_print(hh);
-
-
-	return hh;
+    while (lhs && rhs) {
+    	//add from lhs
+        if (compar(lhs->str,rhs->str) <= 0) {
+            *current = lhs;
+            lhs = lhs->next;
+        }
+        //add from rhs 
+        else {
+            *current = rhs;
+            rhs = rhs->next;
+        }
+        current = &((*current)->next);
+    }
+    *current = lhs ? lhs : rhs;
+	return head;
 }
 
 /** 
