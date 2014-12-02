@@ -97,41 +97,24 @@ void List_print(List * head)
  */
 List * List_merge(List * lhs, List * rhs, int (*compar)(const char *, const char*)){
 
-	List ** head = NULL;
-	List * hh = NULL;
-	int i = 0;
+	List * head = NULL;
+	List ** current = &head;
 
-	while(lhs != NULL && rhs != NULL && i <10){
-		printf("iteration # %d, and comparison between %s and %s = %d\n", i, lhs->str, rhs->str, compar(lhs->str,rhs->str) );
-		if (lhs != NULL)
-		{
-			if (rhs == NULL ||compar(lhs->str,rhs->str) <= 0)
-			{	
-				head = &lhs;
-				printf("added string : %s from left\n", (*head) ->str );
-				(*head) = (*head) -> next;
-				if (i == 0)
-				{
-					hh = *head;
-				}
-			}
-		}
-			if (lhs == NULL || compar(lhs->str,rhs->str) > 0)
-			{
-				head = &rhs;
-				printf("added string : %s from right\n", (*head) ->str );
-				(*head) = (*head) -> next;
-				if (i == 0)
-				{
-					hh = *head;
-				}
-			}
-		i++;
-	}
-	List_print(hh);
-
-
-	return hh;
+    while (lhs && rhs) { //while neither of them are NULL
+    	//add from lhs
+        if (compar(lhs->str,rhs->str) <= 0) {
+            *current = lhs;
+            lhs = lhs->next;
+        }
+        //add from rhs 
+        else {
+            *current = rhs;
+            rhs = rhs->next;
+        }
+        current = &((*current)->next);
+    }
+    *current = lhs ? lhs : rhs; // add the last node or nodes
+	return head;
 }
 
 /** 
@@ -156,7 +139,56 @@ List * List_merge(List * lhs, List * rhs, int (*compar)(const char *, const char
  */
 List * List_sort(List * list, int (*compar)(const char *, const char*)){
 
-	return list;
+	int len = List_length(list);
+
+	//base case-------------------------------------------------------
+	if (len < 2)
+	{
+		return list;
+	}
+
+	//recursive case---------------------------------------------------
+
+	//split linked list into two approx. equal sized lists	
+	int i;
+	int mid;
+	List * left = NULL;
+	List * right = NULL;
+	List ** l_current = &left;
+	List ** r_current = &right;
+
+	i = 0;
+	mid = len/2;
+
+	while (list){
+		//add to left
+		if (i < mid)
+		{
+			*l_current = list; //move the entire list over to left
+			list = list -> next; //make list's head the next node of list
+			l_current = &(*l_current) -> next; //move to the next node of left
+			*l_current = NULL; //ensure that it points to NULL
+		}
+		//add to right
+		else{ 
+			*r_current = list;
+			list = list -> next;
+			r_current = &(*r_current) -> next;
+
+		}
+		i++;
+	}
+	
+	//call list sort on each of these smaller lists
+	left = List_sort(left, strcmp);
+	right = List_sort(right, strcmp);
+
+	//call list merge on these two sorted lists
+	List * sorted = NULL;
+
+	sorted = List_merge(left, right, strcmp);
+
+	return sorted;
 }
 
 
