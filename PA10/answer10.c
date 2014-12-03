@@ -34,41 +34,44 @@ struct YelpDataBST
 static BusinessTree * BusinessTree_construct(int id, char * name, 
 						char* state, char * zip_code, long offset)
 {
-	BusinessTree * tn ;
-	tn = malloc(sizeof(BusinessTree));
+	BusinessTree * tn = malloc(sizeof(BusinessTree));
 	tn -> offset = offset;
 	tn -> id = id;
-	tn -> name = name;
-	tn -> state = state;
-	tn -> zip_code = zip_code;
+	tn -> name = strdup(name);
+	tn -> state = strdup(state);
+	tn -> zip_code = strdup(zip_code);
 	tn -> left = NULL;
 	tn -> right = NULL;
 	tn -> next = NULL;
 	return tn;
 }
 
-BusinessTree * Tree_insert (BusinessTree * tn , int id, char * name, 
-							char* state, char * zip_code, long offset)
+BusinessTree * buildTree(BusinessTree * array, int beginning, int end)
+{/*
+	if (array == NULL)
+	{
+		printf("the array was null\n");
+		return NULL;
+	}
+	BusinessTree * tree = NULL;
+	int mid = (end - beginning) / 2;
+	//make the node
+	tree = BusinessTree_construct(array[mid]->id, array[mid]->id, array[mid]->name, 
+		array[mid]->state, array[mid]->zip_code, array[mid]->offset);
+	//make the left
+	tree->left = buildTree(array, beginning, mid);
+	//make the right
+	tree->right = buildTree(array, mid, end);
+*/
+	return NULL;
+}
+
+int comparb(const void * a, const void * b)
 {
-	// empty , create a node
-	if ( tn == NULL )
-	{
-		return BusinessTree_construct(id, name, state, zip_code, offset);
-	}
-	// not empty
-	if (strcmp(name, tn -> name) == 0)//the names are equal
-	{
-		tn->next = Tree_insert(tn->left , id, name, state, zip_code, offset);
-	}
-	else if (strcmp(name, tn->name) < 0)//insert to the left
-	{
-		tn->left = Tree_insert(tn->left , id, name, state, zip_code, offset);
-	}
-	else if (strcmp(name, tn -> name) > 0)//insert to the right
-	{
-		tn->right = Tree_insert(tn->right , id, name, state, zip_code, offset);
-	}
-	return tn;
+	const struct BusinessTree *l1 = (BusinessTree *)a;
+	const struct BusinessTree *l2 = (BusinessTree *)b;
+
+	return(strcmp(l1->name, l2->name));
 }
 
 struct YelpDataBST* create_business_bst(const char* businesses_path,
@@ -93,11 +96,13 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	char zip_code[MAXZIP];
 	char * line = malloc(sizeof(char) * MAXLINE);
 	int cell_index = 0;
-	int i = 0;
+	int num_businesses = 0;
 	int iId;//the integer form of the id
-	BusinessTree * root = NULL;
+	//BusinessTree * root = NULL;
+	int treearraylength = 1000;
+	BusinessTree * treearray = malloc(treearraylength * sizeof(BusinessTree *));
 
-	while (!feof(businesses_stream)) //reads through the entire file getting lines
+	while (!feof(businesses_stream))
 	{
 		offset = ftell(businesses_stream);
 		fgets(line, MAXLINE, businesses_stream);
@@ -147,8 +152,71 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 
 		//create node of BST and populate it with the data
 		iId = atoi(id);
-		root = Tree_insert(root, iId, name, state, zip_code, offset);
-		i++;
+		//ensure there in enough room in the array
+		if (num_businesses > (treearraylength -1))
+		{
+			treearraylength *= 2;
+			treearray = realloc(treearray, treearraylength * sizeof(BusinessTree *));
+		}
+		//add data to array
+		treearray[num_businesses] = *BusinessTree_construct(iId, name, state, zip_code, offset); 
+		num_businesses++;
+	}
+
+	//sorting the array by name
+	qsort(treearray, (size_t)num_businesses-1, sizeof(BusinessTree), comparb);
+	int i;
+	for (i = 0; i < num_businesses; i++)
+	{
+		printf("%d) id: %d, name: %s, state: %s, zip_code: %s, offset: %li\n", i,
+			treearray[i].id, treearray[i].name, treearray[i].state, treearray[i].zip_code, treearray[i].offset);
+	}
+
+	//creating new array as well as handle duplicates of the same name
+	int uniquenames[num_businesses-1];
+	int uniquenamespos = 0;
+	for (i = 0; i < num_businesses-2; i++)
+	{
+		//read current and next business names
+		char * nameA = treearray[i].name;
+		char * nameB = treearray[i+1].name;
+		BusinessTree * current = &treearray[i];
+		BusinessTree * print = &treearray[i];
+		//the names are the same, add the next treenode to the list
+		if (strcmp(nameA, nameB) == 0)
+		{
+			//add to unique names list, and increment number of unique names
+			uniquenames[uniquenamespos] = i;
+			uniquenamespos++;
+			//increment i, and add nodes to list untill nameA != name B
+			while(strcmp(nameA, nameB) == 0)
+			{
+				i++;
+				current->next = &treearray[i];
+				nameB = treearray[i+1].name;
+			}
+			/*print out the linked list
+			int p = 0;
+			printf("START+++++++++++++++++++++printing linked list\n");
+			while(print != NULL)
+			{
+				printf("%d) name: %s, zip: %s\n", p, print->name, print->zip_code);
+				print = print->next;
+				p++;
+			}
+			printf("END+++++++++++++++++++++printing linked list\n");*/
+		}
+		else
+		{
+			uniquenames[uniquenamespos] = i;
+			uniquenamespos++;
+		}
+	}
+
+	//print the int array uniquenames
+	for (i = 0; i < uniquenamespos; i++)
+	{
+		printf("%d\n", uniquenames[i]);
 	}
 
 	//reading in reviews.tsv to create an array of business IDs and offsets
@@ -202,14 +270,16 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	}
 
 	//creating the YelpDataBST
-	struct YelpDataBST * thedata;
+	/*struct YelpDataBST * thedata;
 	thedata = malloc(sizeof(struct YelpDataBST));
 	thedata->business_tree = root;
 	thedata->review_offsets = review_idsandoffsets;
-	return NULL;
+	return NULL;*/
 
-	fclose(businesses_stream);
-	fclose(reviews_stream);
+	//fclose(businesses_stream);
+	//fclose(reviews_stream);
+
+	return NULL;
 }
 
 struct BusinessTree * searchTree(BusinessTree * tn , char * name)
