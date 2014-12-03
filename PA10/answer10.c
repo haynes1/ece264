@@ -195,7 +195,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 				review_idsandoffsets[i][1] = offset;
 			}
 			num_rows++;
-			printf("business id = %li, offset = %li\n", review_idsandoffsets[i][0], review_idsandoffsets[i][1]);
+			//printf("business id = %li, offset = %li\n", review_idsandoffsets[i][0], review_idsandoffsets[i][1]);
 		}
 
 		i++;
@@ -207,6 +207,9 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	thedata->business_tree = root;
 	thedata->review_offsets = review_idsandoffsets;
 	return NULL;
+
+	fclose(businesses_stream);
+	fclose(reviews_stream);
 }
 
 struct BusinessTree * searchTree(BusinessTree * tn , char * name)
@@ -284,6 +287,8 @@ struct Location * locationConstruct(BusinessTree * tn, long offset, char * busin
 	loc->state = tn->state;
 	loc->zip_code = tn->zip_code;
 	loc->reviews = NULL;
+
+	fclose(businesses_stream);
 
 	return loc;
 }
@@ -422,10 +427,13 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 		}
 		//add the array of reviews to the Location struct
 		locations[i].reviews = reviews;
+		fclose(reviews_stream);
+		bnodetraverse = bnodetraverse->next; //move to next location
 	}
 
 	//add the location array to the Business struct
 	business->locations = locations;
+
 
 	return business;
 }
