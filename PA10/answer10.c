@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include "answer10.h"
 
 #define MAXLINE 500
@@ -46,25 +47,38 @@ static BusinessTree * BusinessTree_construct(int id, char * name,
 	return tn;
 }
 
-BusinessTree * buildTree(BusinessTree * array, int beginning, int end)
-{/*
-	if (array == NULL)
+BusinessTree * buildTree(int * array, BusinessTree * barray, int beginning, int end)
+{
+	if (barray == NULL || array == NULL || beginning > end)
 	{
-		printf("the array was null\n");
 		return NULL;
 	}
-	BusinessTree * tree = NULL;
-	int mid = (end - beginning) / 2;
+	BusinessTree * tree = malloc(sizeof(BusinessTree));
+	int mid = (end + beginning) / 2;
+	int ind = array[mid];
+	//printf("id: %d, name: %s, state: %s, zip_code: %s, offset: %li\n", barray[ind].id, barray[ind].name, barray[ind].state, 
+		//barray[ind].zip_code, barray[ind].offset);
 	//make the node
-	tree = BusinessTree_construct(array[mid]->id, array[mid]->id, array[mid]->name, 
-		array[mid]->state, array[mid]->zip_code, array[mid]->offset);
+	tree = BusinessTree_construct(barray[ind].id, barray[ind].name, barray[ind].state, 
+		barray[ind].zip_code, barray[ind].offset);
 	//make the left
-	tree->left = buildTree(array, beginning, mid);
+	tree->left = buildTree(array, barray, beginning, mid-1);
 	//make the right
-	tree->right = buildTree(array, mid, end);
-*/
-	return NULL;
+	tree->right = buildTree(array, barray, mid+1, end);
+
+	return tree;
 }
+
+/*static void printTree(BusinessTree * tn)
+{
+	if ( tn == NULL )
+	{
+		return;
+	}
+	printTree(tn -> left);
+	printf("id: %d, name: %s, state: %s, zip: %s, offset: %li\n", tn->id, tn->name, tn->state, tn->zip_code, tn->offset);
+	printTree(tn ->right);
+}*/
 
 int comparb(const void * a, const void * b)
 {
@@ -165,12 +179,12 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 
 	//sorting the array by name
 	qsort(treearray, (size_t)num_businesses-1, sizeof(BusinessTree), comparb);
-	int i;
+	int i;/*
 	for (i = 0; i < num_businesses; i++)
 	{
 		printf("%d) id: %d, name: %s, state: %s, zip_code: %s, offset: %li\n", i,
 			treearray[i].id, treearray[i].name, treearray[i].state, treearray[i].zip_code, treearray[i].offset);
-	}
+	}*/
 
 	//creating new array as well as handle duplicates of the same name
 	int uniquenames[num_businesses-1];
@@ -181,7 +195,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 		char * nameA = treearray[i].name;
 		char * nameB = treearray[i+1].name;
 		BusinessTree * current = &treearray[i];
-		BusinessTree * print = &treearray[i];
+		//BusinessTree * print = &treearray[i];
 		//the names are the same, add the next treenode to the list
 		if (strcmp(nameA, nameB) == 0)
 		{
@@ -214,10 +228,15 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	}
 
 	//print the int array uniquenames
-	for (i = 0; i < uniquenamespos; i++)
+	/*for (i = 0; i < uniquenamespos; i++)
 	{
 		printf("%d\n", uniquenames[i]);
-	}
+	}*/
+
+	//building the BST
+	BusinessTree * thetree = malloc(sizeof(BusinessTree));
+	thetree = buildTree(uniquenames, treearray, 0, uniquenamespos);
+	//printTree(thetree);
 
 	//reading in reviews.tsv to create an array of business IDs and offsets
 	int num_reviewpositions = 2000;
@@ -270,16 +289,18 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	}
 
 	//creating the YelpDataBST
-	/*struct YelpDataBST * thedata;
+	struct YelpDataBST * thedata;
 	thedata = malloc(sizeof(struct YelpDataBST));
-	thedata->business_tree = root;
+	thedata->business_tree = thetree;
 	thedata->review_offsets = review_idsandoffsets;
-	return NULL;*/
+	thedata->businesses_path = (char*)businesses_path;
+	thedata->reviews_path = (char*)reviews_path;
+	
+	fclose(businesses_stream);
+//	fclose(reviews_stream);
+	printf("thedata: %p, thedata->bst: %p\n", thedata, thedata->business_tree);
 
-	//fclose(businesses_stream);
-	//fclose(reviews_stream);
-
-	return NULL;
+	return thedata;
 }
 
 struct BusinessTree * searchTree(BusinessTree * tn , char * name)
@@ -309,56 +330,63 @@ struct BusinessTree * searchTree(BusinessTree * tn , char * name)
 
 struct Location * locationConstruct(BusinessTree * tn, long offset, char * businesses_path)
 {
-	struct Location * loc = NULL;
+	struct Location * loc = malloc(sizeof(struct Location));
 	//open file to read in remaining strings
-	FILE * businesses_stream = NULL;
-	businesses_stream = fopen(businesses_path, "r");
+	FILE * bstream;
+	bstream = fopen(businesses_path, "r");
 	char * line = malloc(sizeof(char) * MAXLINE);
 	char address[MAXADDRESS];
 	char city[MAXCITY];
-	while (!feof(businesses_stream)) //reads through the entire file getting lines
+	if (bstream != NULL)
 	{
-		fgets(line, MAXLINE, businesses_stream);
-		int b = 0;
-		int a = 0;
-		int cell_index = 0;
-		
-		//parse each line to get needed data
-		while(line[a] != '\0')
+		while (!feof(bstream)) //reads through the entire file getting lines
 		{
-			if (line[a] == '\t') //test to see if we've moved to a new cell
+			fgets(line, MAXLINE, bstream);
+			int b = 0;
+			int a = 0;
+			int cell_index = 0;
+			
+			//parse each line to get needed data
+			while(line[a] != '\0')
 			{
-				cell_index++;
-				b = 0;
-				a++; //to move past the '\t'
-			}
-			switch(cell_index)
-			{
-				case 2:
-					address[b] = line[a];
-					b++;
-					address[b] = '\0';
-					break;
-				case 3:
-					city[b] = line[a];
-					b++;
-					city[b] = '\0';
-					break;
-				default:
-					break;
-			}
+				if (line[a] == '\t') //test to see if we've moved to a new cell
+				{
+					cell_index++;
+					b = 0;
+					a++; //to move past the '\t'
+				}
+				switch(cell_index)
+				{
+					case 2:
+						address[b] = line[a];
+						b++;
+						address[b] = '\0';
+						break;
+					case 3:
+						city[b] = line[a];
+						b++;
+						city[b] = '\0';
+						break;
+					default:
+						break;
+				}
 
-			a++;
-		}
-		loc->address = address;
-		loc->city = city;
-	}	
-
+				a++;
+			}
+			loc->address = address;
+			loc->city = city;
+		}	
+	}
+	else
+	{
+		char *error_str = strerror(errno);
+		printf("%s\n", error_str);
+	}
 	loc->state = tn->state;
 	loc->zip_code = tn->zip_code;
 	loc->reviews = NULL;
 
-	fclose(businesses_stream);
+	fclose(bstream);
 
 	return loc;
 }
@@ -389,8 +417,8 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
                                       char* name, char* state, char* zip_code)
 {
 	//create the structs
-	BusinessTree * bnode = NULL;
-	struct Business * business = NULL;
+	BusinessTree * bnode = malloc(sizeof(struct Business));
+	struct Business * business = malloc(sizeof(struct Business));
 	struct Location * locations = NULL;
 	struct Review * reviews = NULL;
 	BusinessTree * bnodetraverse;
