@@ -561,10 +561,10 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 			}
 		}while(atoi(id) == found_node->id);
 		int i;
-		for (i = 0; i < num_reviews; i++)
+		/*for (i = 0; i < num_reviews; i++)
 		{
-			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_reviews][i].stars, reviews[num_reviews][i].text);
-		}
+			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_locations][i].stars, reviews[num_locations][i].text);
+		}*/
 		locations[num_locations].reviews = reviews[num_reviews];
 		locations[num_locations].num_reviews = num_reviews;
 		found_node = found_node->next;
