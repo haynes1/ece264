@@ -391,15 +391,14 @@ int getReviews(long offset, int looking_id, FILE * reviews_stream, struct Review
 				*reviews = realloc(*reviews, maxreviews * sizeof(struct Review *));
 			}
 			//add data to array
-			reviews[num_reviews] = malloc(10* sizeof(struct Review));
-			createReview(stars, text);
+			reviews[num_reviews] = createReview(stars, text);
 			num_reviews++;
 			//printf("id: %d, stars: %d, text: %s\n", atoi(id), atoi(stars), text);
 		}
 	}while(atoi(id) == looking_id);
 
 	//print the array to ensure that it worked
-	/&int i;
+	/*int i;
 	for (i = 0; i < num_reviews; i++)
 	{
 		printf("id: %d, stars: %d, text: %s\n", looking_id, reviews[i]->stars, reviews[i]->text);
