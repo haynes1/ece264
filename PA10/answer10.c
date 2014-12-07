@@ -158,7 +158,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	int iId;//the integer form of the id
 	//BusinessTree * root = NULL;
 	int treearraylength = 1000;
-	BusinessTree * treearray = malloc(treearraylength * sizeof(BusinessTree *));
+	BusinessTree * treearray = malloc(treearraylength * sizeof(BusinessTree));
 
 	while (!feof(businesses_stream))
 	{
@@ -208,7 +208,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 		if (num_businesses > (treearraylength -1))
 		{
 			treearraylength *= 2;
-			treearray = realloc(treearray, treearraylength * sizeof(BusinessTree *));
+			treearray = realloc(treearray, treearraylength * sizeof(BusinessTree));
 		}
 		//add data to array
 		treearray[num_businesses] = *BusinessTree_construct(iId, name, address, offset, 
@@ -321,91 +321,15 @@ struct BusinessTree * searchTree(BusinessTree * tn , char * name)
 	return NULL;	
 }
 
-struct Review * createReview(char * stars, char * text){
-
+struct Review * createReview(int stars, char * text){
+	//printf("stars: %s, text: %s\n", stars, text);
 	struct Review * r = malloc(sizeof(struct Review));
 	r->text = strdup(text);
-	r->stars = (uint8_t)atoi(strdup(stars));
+	r->stars = (uint8_t)stars;
 
 	return r;
 }
 
-int getReviews(long offset, int looking_id, FILE * reviews_stream, struct Review ** reviews)
-{
-	char id[MAXID];
-	char stars[2];
-	char text[MAXREVIEW];
-	char * line = malloc(sizeof(char) * MAXREVIEW);
-	int cell_index;
-	int num_reviews = 0;
-	int maxreviews = 10;
-	reviews = malloc(maxreviews * sizeof(struct Review *));
-	fseek(reviews_stream, offset, SEEK_SET);
-	do
-	{
-		offset = ftell(reviews_stream);
-		fgets(line, MAXREVIEW, reviews_stream);
-		//fputs(line, stderr);
-		int b = 0;
-		int a = 0;
-		cell_index = 0;
-		
-		//parse each line to get needed data
-		while(line[a] != '\0')
-		{
-			if (line[a] == '\t') //test to see if we've moved to a new cell
-			{
-				cell_index++;
-				b = 0;
-				a++; //to move past the '\t'
-			}
-			switch(cell_index)
-			{
-				case 0:
-					id[b] = line[a];
-					b++;
-					id[b] = '\0';
-					break;
-				case 1:
-					stars[b] = line[a];
-					b++;
-					stars[b] = '\0';
-					break;
-				case 5:
-					text[b] = line[a];
-					b++;
-					text[b] = '\0';
-					break;
-				default:
-					break;
-			}
-			a++;
-		}
-
-		//ensure there in enough room in the array
-		if (atoi(id) == looking_id)
-		{
-			if (num_reviews > (maxreviews -1))
-			{
-				maxreviews *= 2;
-				*reviews = realloc(*reviews, maxreviews * sizeof(struct Review *));
-			}
-			//add data to array
-			reviews[num_reviews] = createReview(stars, text);
-			num_reviews++;
-			//printf("id: %d, stars: %d, text: %s\n", atoi(id), atoi(stars), text);
-		}
-	}while(atoi(id) == looking_id);
-
-	//print the array to ensure that it worked
-	/*int i;
-	for (i = 0; i < num_reviews; i++)
-	{
-		printf("id: %d, stars: %d, text: %s\n", looking_id, reviews[i]->stars, reviews[i]->text);
-	}*/
-
-	return num_reviews;
-}
 
 
 int compar(const void * a, const void * b)
@@ -496,23 +420,31 @@ struct Location * locationConstruct(BusinessTree * tn, char * businesses_path)
 	return loc;
 }
 
-struct Review * reviewConstruct(int stars, char* text)
+
+void destroyReviews(struct Review ** r, int num_reviews)
 {
-	struct Review * review = NULL;
-	review->stars = (uint8_t)stars;
-	review->text = text;
-	return review;
+	int i;
+	for (i = 0; i < num_reviews; i++)
+	{
+		free(r[i]->text);
+		free(r[i]);
+	}
+	return;
 }
 
-void destroyLocation(struct Location * l)
+void destroyLocations(struct Location ** l, int num_locations, int num_reviews)
 {
-	free(l->address);
-	free(l->city);
-	free(l->state);
-	free(l->zip_code);
-	free(l->reviews);
-	//free(l->num_reviews);
-	free(l);
+	int i;
+	for (i = 0; i < num_locations; i++)
+	{
+		free(l[i]->address);
+		free(l[i]->city);
+		free(l[i]->state);
+		free(l[i]->zip_code);
+		free(l[i]->reviews);
+		destroyReviews(&l[i]->reviews, num_reviews);
+		free(l[i]);
+	}
 	return;
 }
 
@@ -564,19 +496,81 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 		}
 		locations[num_locations] = *locationConstruct(found_node, bst->businesses_path);
 		//add the array of reviews to each location
-		num_reviews = getReviews(found_node->first_reviewoffset, found_node->id, reviews_stream, &reviews[num_locations]);
-		locations[num_locations].num_reviews = (uint32_t)num_reviews;
+		char id[MAXID];
+		char stars[2];
+		char text[MAXREVIEW];
+		char * line = malloc(sizeof(char) * MAXREVIEW);
+		int cell_index;
+		int maxreviews = 10;
+		reviews[num_locations] = malloc(maxreviews * sizeof(struct Review));
+		fseek(reviews_stream, found_node->first_reviewoffset, SEEK_SET);
+		num_reviews = 0;
+		//get lines, create review structs, add to array
+		do
+		{
+			fgets(line, MAXREVIEW, reviews_stream);
+			//fputs(line, stderr);
+			int b = 0;
+			int a = 0;
+			cell_index = 0;
+			
+			//parse each line to get needed data
+			while(line[a] != '\0')
+			{
+				if (line[a] == '\t') //test to see if we've moved to a new cell
+				{
+					cell_index++;
+					b = 0;
+					a++; //to move past the '\t'
+				}
+				switch(cell_index)
+				{
+					case 0:
+						id[b] = line[a];
+						b++;
+						id[b] = '\0';
+						break;
+					case 1:
+						stars[b] = line[a];
+						b++;
+						stars[b] = '\0';
+						break;
+					case 5:
+						text[b] = line[a];
+						b++;
+						text[b] = '\0';
+						break;
+					default:
+						break;
+				}
+				a++;
+			}
 
-		//print the array of reviews to ensure it works
+			//ensure there in enough room in the array
+			if (atoi(id) == found_node->id)
+			{
+				if (num_reviews > (maxreviews -1))
+				{
+					maxreviews *= 2;
+					reviews[num_locations] = realloc(reviews[num_locations], maxreviews * sizeof(struct Review));
+				}
+				//add data to array
+				reviews[num_locations][num_reviews] = *createReview(atoi(stars), text);
+				num_reviews++;
+				//printf("id: %d, stars: %d, text: %s\n", atoi(id), atoi(stars) , text);
+			}
+		}while(atoi(id) == found_node->id);
 		int i;
 		for (i = 0; i < num_reviews; i++)
 		{
-			//printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_reviews].stars, reviews[num_reviews][i].text);
+			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_reviews][i].stars, reviews[num_reviews][i].text);
 		}
-
+		locations[num_locations].reviews = reviews[num_reviews];
+		locations[num_locations].num_reviews = num_reviews;
 		found_node = found_node->next;
 		num_locations++;
 	}
+
 	business->num_locations = num_locations;
 
 	//filter by state and zip code
@@ -592,7 +586,13 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 				{
 					locations[i] = locations[i+1];
 				}
-				destroyLocation(&locations[num_locations]);
+				free(locations[i].address);
+				free(locations[i].city);
+				free(locations[i].state);
+				free(locations[i].zip_code);
+				free(locations[i].reviews);
+				destroyReviews(&locations[i].reviews, num_reviews);
+				free(&locations[i]);
 				num_locations--;
 			}
 		}
@@ -604,7 +604,13 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 				{
 					locations[i] = locations[i+1];
 				}
-				destroyLocation(&locations[num_locations]);
+				free(locations[i].address);
+				free(locations[i].city);
+				free(locations[i].state);
+				free(locations[i].zip_code);
+				free(locations[i].reviews);
+				destroyReviews(&locations[i].reviews, num_reviews);
+				free(&locations[i]);
 				num_locations--;
 			}	
 		}
@@ -621,10 +627,10 @@ struct Business* get_business_reviews(struct YelpDataBST* bst,
 
 void destroy_business_bst(struct YelpDataBST* bst){
 
-	free(bst->business_tree);
-	free(bst->businesses_path);
-	free(bst->reviews_path);
-	free(bst);
+	//free(bst->business_tree);
+	//free(bst->businesses_path);
+	//free(bst->reviews_path);
+	//free(bst);
 
 	return;
 }
