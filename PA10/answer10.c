@@ -371,14 +371,18 @@ int compar(const void * a, const void * b)
 {
 	const struct Location *l1 = (struct Location *)a;
 	const struct Location *l2 = (struct Location *)b;
-	char * l1str = strdup(l1->state); 
-	strcat(l1str, l1->city);
-	strcat(l1str, l1->address);
-	char * l2str = strdup(l2->state); 
-	strcat(l2str, l2->city);
-	strcat(l2str, l2->address);
+	int comparison;
+	comparison = strcmp(l1->state, l2->state);
+	if (comparison == 0)
+	{
+		comparison = strcmp(l1->city, l2->city);
+		if (comparison == 0)
+		{
+			comparison = strcmp(l1->address, l2->address);
+		}
+	}
 
-	return(strcmp(l1str, l2str));
+	return(comparison);
 }
 
 int comparReviews(const void * a, const void * b)
