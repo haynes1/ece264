@@ -15,10 +15,10 @@
 typedef struct BusinessTree
 {
 	long offset;
+	long first_reviewoffset;
 	int id;
 	char * name;
-	char * state;
-	char * zip_code; 
+	char * address;
 	struct BusinessTree * next;
 	struct BusinessTree * left;
 	struct BusinessTree * right;
@@ -27,20 +27,18 @@ typedef struct BusinessTree
 struct YelpDataBST
 {
 	BusinessTree * business_tree;
-	long ** review_offsets;
 	char * businesses_path;
 	char * reviews_path;
 };
 
-static BusinessTree * BusinessTree_construct(int id, char * name, 
-						char* state, char * zip_code, long offset)
+static BusinessTree * BusinessTree_construct(int id, char * name, char* address, long offset, long first_reviewoffset)
 {
 	BusinessTree * tn = malloc(sizeof(BusinessTree));
 	tn -> offset = offset;
+	tn -> first_reviewoffset = first_reviewoffset;
 	tn -> id = id;
 	tn -> name = strdup(name);
-	tn -> state = strdup(state);
-	tn -> zip_code = strdup(zip_code);
+	tn -> address = strdup(address);
 	tn -> left = NULL;
 	tn -> right = NULL;
 	tn -> next = NULL;
@@ -72,8 +70,9 @@ static void printTree(BusinessTree * thetree)
 		return;
 	}
 	printTree(thetree->left);
-	printf("id: %d, name: %s,  state: %s, zip: %s, offset: %li, next: %p, left: %p right: %p\n",
-		thetree->id, thetree->name, thetree->state, thetree->zip_code, thetree->offset, thetree->next, thetree->left, thetree->right);
+	printf("id: %d, name: %s, address: %s, offset: %li, firstreview: %li next: %p, left: %p right: %p\n",
+		thetree->id, thetree->name, thetree->address, thetree->offset, thetree->first_reviewoffset, 
+		thetree->next, thetree->left, thetree->right);
 	printTree(thetree->next);
 	printTree(thetree->right);
 }
@@ -86,6 +85,55 @@ int comparb(const void * a, const void * b)
 	return(strcmp(l1->name, l2->name));
 }
 
+/* Returns the offset of the first review for the given location-id, or -1 if there are no reviews */
+
+long get_offset_of_first_review(FILE * reviews_stream, int id)
+{
+	long offset;
+	int line_position;
+	char * line = malloc(sizeof(char) * MAXREVIEW);
+	char * rid = malloc(10 * sizeof(char));
+	int read_id;
+	int i = 0;
+	if (reviews_stream != NULL)
+	{
+		while (!feof(reviews_stream))
+		{
+			offset = ftell(reviews_stream);
+			fgets(line, MAXREVIEW, reviews_stream);
+			//fputs(line, stderr);
+			line_position = 0;
+			//read in the business ID to id
+			while(line[line_position] != '\t')
+			{
+				rid[line_position] = line[line_position];
+				line_position++;
+				rid[line_position] = '\0';
+			}
+			read_id = atoi(rid);
+			//printf("read id = %d, looking for id %d\n", read_id, id);
+			//free(rid);
+			 //if it is the first instance of a business ID
+			if (read_id == id)
+			{
+				//printf("FOUND id %d, looking for id %d\n", read_id, id );
+				return offset;
+				break;
+			}
+			else if (read_id > id)
+			{
+				rewind(reviews_stream);
+			}
+			i++;
+		}
+	}
+	else
+	{
+		printf("reviews.tsv failed to open\n");
+	}
+	return -1;
+}
+
 struct YelpDataBST* create_business_bst(const char* businesses_path,
                                         const char* reviews_path)
 {
@@ -94,18 +142,16 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	FILE * reviews_stream = NULL;
 	businesses_stream = fopen(businesses_path, "r");
 	reviews_stream = fopen(reviews_path, "r");
-	if (businesses_stream == NULL || reviews_stream == NULL)
+	if (businesses_stream == NULL)
 	{
-		printf("one or both of the files failed to open. Cannot create BST\n");
+		printf("business.tsv failed to open\n");
 		return NULL;
 	}
-
 	//reading in businesses.tsv and creating the BST
 	long offset;
 	char id[MAXID];
+	char address[MAXADDRESS];
 	char name[100];
-	char state[MAXSTATE];
-	char zip_code[MAXZIP];
 	char * line = malloc(sizeof(char) * MAXLINE);
 	int cell_index = 0;
 	int num_businesses = 0;
@@ -144,20 +190,14 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 					b++;
 					name[b] = '\0';
 					break;
-				case 4:
-					state[b] = line[a];
+				case 2:
+					address[b] = line[a];
 					b++;
-					state[b] = '\0';
-					break;
-				case 5:
-					zip_code[b] = line[a];
-					b++;
-					zip_code[b] = '\0';
+					address[b] = '\0';
 					break;
 				default:
 					break;
 			}
-
 			a++;
 		}
 		//fprintf(stderr, "%d: offset = %li, Id = %d, name = %s, state = %s, zip_code = %s\n", i, offset, iId, name, state, zip_code);
@@ -171,9 +211,12 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 			treearray = realloc(treearray, treearraylength * sizeof(BusinessTree *));
 		}
 		//add data to array
-		treearray[num_businesses] = *BusinessTree_construct(iId, name, state, zip_code, offset); 
+		treearray[num_businesses] = *BusinessTree_construct(iId, name, address, offset, 
+			get_offset_of_first_review(reviews_stream, iId)); 
 		num_businesses++;
 	}
+	fclose(businesses_stream);
+	fclose(reviews_stream);
 
 	//sorting the array by name
 	qsort(treearray, (size_t)num_businesses-1, sizeof(BusinessTree), comparb);
@@ -216,7 +259,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 			printf("START+++++++++++++++++++++printing linked list\n");
 			while(print != NULL)
 			{
-				printf("%d) name: %s, zip: %s\n", p, print->name, print->zip_code);
+				printf("%d) name: %s, address: %s, next: %p\n", print->id, print->name, print->address, print->next);
 				print = print->next;
 				p++;
 			}
@@ -228,6 +271,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 			uniquenamespos++;
 		}
 	}
+
 
 	//print the int array uniquenames
 	/*for (i = 0; i < uniquenamespos; i++)
@@ -241,68 +285,13 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	int ind = uniquenames[mid];
 	//printTree(&treearray[ind]);
 
-	//reading in reviews.tsv to create an array of business IDs and offsets
-	int num_reviewpositions = 2000;
-	long ** review_idsandoffsets = malloc(num_reviewpositions * sizeof(long));
-	char rid[6];//the business id
-	int pos;
-	i = 0;
-	int num_rows = 0;
-	int irid; //the integer form of the business id
-
-	while (!feof(reviews_stream))
-	{
-		offset = ftell(reviews_stream);
-		fgets(line, MAXREVIEW, reviews_stream);
-		//fputs(line, stderr);
-		pos = 0;
-		char * previousrID = strdup(rid);
-		//read in the business ID to id
-		while(line[pos] != '\t')
-		{
-			rid[pos] = line[pos];
-			pos++;
-			rid[pos] = '\0';
-		}
-		//printf("offset = %li, previousrID = %s, rid = %s\n", offset, previousrID, rid);
-		if (strcmp(previousrID, rid) != 0) //if it is the first instance of a business ID
-		{
-			//printf("will add a row %d with buisiness id %s\n",num_rows, rid );
-			irid = atoi(rid);
-			//if there is room in the array
-			if (i < num_reviewpositions)
-			{
-				review_idsandoffsets[i] = malloc(2 * sizeof(long));
-				review_idsandoffsets[i][0] = (long)irid;
-				review_idsandoffsets[i][1] = offset;
-			}
-			//else there is no room in the array
-			else{ 
-				num_reviewpositions *= 2;
-				review_idsandoffsets = realloc(review_idsandoffsets, num_reviewpositions);
-				review_idsandoffsets[i] = malloc(2 * sizeof(long));
-				review_idsandoffsets[i][0] = (long)irid;
-				review_idsandoffsets[i][1] = offset;
-			}
-			num_rows++;
-			//printf("business id = %li, offset = %li\n", review_idsandoffsets[i][0], review_idsandoffsets[i][1]);
-		}
-
-		i++;
-	}
-
-	printTree(&treearray[ind]);
 	//creating the YelpDataBST
 	struct YelpDataBST * bst;
 	bst = malloc(sizeof(struct YelpDataBST));
 	bst->business_tree = &treearray[ind];
-	bst->review_offsets = review_idsandoffsets;
 	bst->businesses_path = (char*)businesses_path;
 	bst->reviews_path = (char*)reviews_path;
-	printTree(bst->business_tree);
-	
-	fclose(businesses_stream);
-//	fclose(reviews_stream);
+	//printTree(bst->business_tree);
 
 	return bst;
 }
@@ -332,69 +321,93 @@ struct BusinessTree * searchTree(BusinessTree * tn , char * name)
 	return NULL;	
 }
 
-struct Location * locationConstruct(BusinessTree * tn, long offset, char * businesses_path)
-{
-	struct Location * loc = malloc(sizeof(struct Location));
-	//open file to read in remaining strings
-	FILE * bstream;
-	bstream = fopen(businesses_path, "r");
-	char * line = malloc(sizeof(char) * MAXLINE);
-	char address[MAXADDRESS];
-	char city[MAXCITY];
-	if (bstream != NULL)
-	{
-		while (!feof(bstream)) //reads through the entire file getting lines
-		{
-			fgets(line, MAXLINE, bstream);
-			int b = 0;
-			int a = 0;
-			int cell_index = 0;
-			
-			//parse each line to get needed data
-			while(line[a] != '\0')
-			{
-				if (line[a] == '\t') //test to see if we've moved to a new cell
-				{
-					cell_index++;
-					b = 0;
-					a++; //to move past the '\t'
-				}
-				switch(cell_index)
-				{
-					case 2:
-						address[b] = line[a];
-						b++;
-						address[b] = '\0';
-						break;
-					case 3:
-						city[b] = line[a];
-						b++;
-						city[b] = '\0';
-						break;
-					default:
-						break;
-				}
+struct Review * createReview(char * stars, char * text){
 
-				a++;
-			}
-			loc->address = strdup(address);
-			loc->city = strdup(city);
-		}	
-	}
-	else
-	{
-		char *error_str = strerror(errno);
-		printf("%s\n", error_str);
-	}
-	//printf("%s\n",loc->address);
-	loc->state = strdup(tn->state);
-	loc->zip_code = strdup(tn->zip_code);
-	loc->reviews = NULL;
+	struct Review * r = malloc(sizeof(struct Review));
+	r->text = strdup(text);
+	r->stars = (uint8_t)atoi(strdup(stars));
 
-	fclose(bstream);
-
-	return loc;
+	return r;
 }
+
+int getReviews(long offset, int looking_id, FILE * reviews_stream, struct Review ** reviews)
+{
+	char id[MAXID];
+	char stars[2];
+	char text[MAXREVIEW];
+	char * line = malloc(sizeof(char) * MAXREVIEW);
+	int cell_index;
+	int num_reviews = 0;
+	int maxreviews = 10;
+	reviews = malloc(maxreviews * sizeof(struct Review *));
+	fseek(reviews_stream, offset, SEEK_SET);
+	do
+	{
+		offset = ftell(reviews_stream);
+		fgets(line, MAXREVIEW, reviews_stream);
+		//fputs(line, stderr);
+		int b = 0;
+		int a = 0;
+		cell_index = 0;
+		
+		//parse each line to get needed data
+		while(line[a] != '\0')
+		{
+			if (line[a] == '\t') //test to see if we've moved to a new cell
+			{
+				cell_index++;
+				b = 0;
+				a++; //to move past the '\t'
+			}
+			switch(cell_index)
+			{
+				case 0:
+					id[b] = line[a];
+					b++;
+					id[b] = '\0';
+					break;
+				case 1:
+					stars[b] = line[a];
+					b++;
+					stars[b] = '\0';
+					break;
+				case 5:
+					text[b] = line[a];
+					b++;
+					text[b] = '\0';
+					break;
+				default:
+					break;
+			}
+			a++;
+		}
+
+		//ensure there in enough room in the array
+		if (atoi(id) == looking_id)
+		{
+			if (num_reviews > (maxreviews -1))
+			{
+				maxreviews *= 2;
+				*reviews = realloc(*reviews, maxreviews * sizeof(struct Review *));
+			}
+			//add data to array
+			reviews[num_reviews] = malloc(10* sizeof(struct Review));
+			createReview(stars, text);
+			num_reviews++;
+			//printf("id: %d, stars: %d, text: %s\n", atoi(id), atoi(stars), text);
+		}
+	}while(atoi(id) == looking_id);
+
+	//print the array to ensure that it worked
+	/&int i;
+	for (i = 0; i < num_reviews; i++)
+	{
+		printf("id: %d, stars: %d, text: %s\n", looking_id, reviews[i]->stars, reviews[i]->text);
+	}*/
+
+	return num_reviews;
+}
+
 
 int compar(const void * a, const void * b)
 {
@@ -410,6 +423,80 @@ int compar(const void * a, const void * b)
 	return(strcmp(l1str, l2str));
 }
 
+struct Location * locationConstruct(BusinessTree * tn, char * businesses_path)
+{
+	struct Location * loc = malloc(sizeof(struct Location));
+	//open file to read in remaining strings
+	FILE * bstream;
+	bstream = fopen(businesses_path, "r");
+	char * line = malloc(sizeof(char) * MAXLINE);
+	char address[MAXADDRESS];
+	char city[MAXCITY];
+	char state[MAXSTATE];
+	char zip_code[MAXZIP];
+	if (bstream != NULL)
+	{
+		fseek(bstream, tn->offset, SEEK_SET);
+		fgets(line, MAXLINE, bstream);
+		//fputs(line, stderr);
+		int b = 0;
+		int a = 0;
+		int cell_index = 0;
+		
+		//parse each line to get needed data
+		while(line[a] != '\0')
+		{
+			if (line[a] == '\t') //test to see if we've moved to a new cell
+			{
+				cell_index++;
+				b = 0;
+				a++; //to move past the '\t'
+			}
+			switch(cell_index)
+			{
+				case 2:
+					address[b] = line[a];
+					b++;
+					address[b] = '\0';
+					break;
+				case 3:
+					city[b] = line[a];
+					b++;
+					city[b] = '\0';
+					break;
+				case 4:
+					state[b] = line[a];
+					b++;
+					state[b] = '\0';
+					break;
+				case 5:
+					zip_code[b] = line[a];
+					b++;
+					zip_code[b] = '\0';
+					break;
+				default:
+					break;
+			}
+
+			a++;
+		}
+		loc->address = strdup(address);
+		loc->city = strdup(city);
+		loc->state = strdup(state);
+		loc->zip_code = strdup(zip_code);	
+	}
+	else
+	{
+		char *error_str = strerror(errno);
+		printf("%s\n", error_str);
+	}
+	//printf("address: %s, city: %s, state: %s, zip: %s\n", loc->address, loc->city, loc->state, loc->zip_code);
+	loc->reviews = NULL;
+	fclose(bstream);
+
+	return loc;
+}
+
 struct Review * reviewConstruct(int stars, char* text)
 {
 	struct Review * review = NULL;
@@ -418,153 +505,127 @@ struct Review * reviewConstruct(int stars, char* text)
 	return review;
 }
 
+void destroyLocation(struct Location * l)
+{
+	free(l->address);
+	free(l->city);
+	free(l->state);
+	free(l->zip_code);
+	free(l->reviews);
+	//free(l->num_reviews);
+	free(l);
+	return;
+}
+
 struct Business* get_business_reviews(struct YelpDataBST* bst,
                                       char* name, char* state, char* zip_code)
 {
-	//create the structs
-	BusinessTree * bnode = malloc(sizeof(struct Business));
+	//create the structs and open the streams
+	BusinessTree * found_node = malloc(sizeof(struct Business));
 	struct Business * business = malloc(sizeof(struct Business));
-	struct Location * locations = NULL;
-	struct Review * reviews = NULL;
-	BusinessTree * bnodetraverse;
-	char * reviews_path = bst->reviews_path;
+	struct Location * locations = NULL; //array of locations for the Business struct
+	struct Review ** reviews = NULL;
+	FILE * reviews_stream = fopen(bst->reviews_path, "r");
+	//printTree(bst->business_tree);
 
 	//search the tree for the business name and populate business
-	bnode = searchTree(bst->business_tree, name);
-	bnodetraverse = bnode;
+	found_node = searchTree(bst->business_tree, name);
+	//print to ensure that the linked list worked
 	/*BusinessTree * print = malloc(sizeof(BusinessTree));
-	print = bnode;
+	print = found_node;
 	int p = 0;
 	printf("START+++++++++++++++++++++printing linked list\n");
 	while(print != NULL)
 	{
-		printf("%d) name: %s, zip: %s next: %p\n", p, print->name, print->zip_code, print->next);
+		struct Location * titties = malloc(sizeof(struct Location));
+		titties = locationConstruct(print, bst->businesses_path);
+		printf("%d) name: %s, address: %s, next: %p\n", p, print->name, titties->address, print->next);
 		print = print->next;
 		p++;
 	}
 	printf("END+++++++++++++++++++++printing linked list\n");*/
-	business->name = bnode->name;
-	//printf("id: %d, name: %s,  state: %s, zip: %s, offset: %li left: %p right: %p\n",
-		//bnode->id, bnode->name, bnode->state, bnode->zip_code, bnode->offset, bnode->left, bnode->right);
+	business->name = found_node->name;
 
-	//traverse through the bnode linked list of locations and populate the locations array
+	//populate Business business
+	business->locations = NULL;
 	int locationbuffersize = 10;
 	locations = malloc(locationbuffersize * sizeof(struct Location));
 	int num_locations = 0;
-	while(bnode != NULL)
+	int num_reviews = 0;
+	reviews = malloc(locationbuffersize * sizeof(struct Review *));
+	//create array of locations
+	while(found_node != NULL)
 	{
 		//ensure that the array is large enough
 		if (num_locations >= (locationbuffersize - 1))//suspicious stuff here
 		{
 			locationbuffersize *= 2;
 			locations = realloc(locations, locationbuffersize * sizeof(struct Location));
+			reviews = realloc(reviews, locationbuffersize * sizeof(struct Review *));
 		}
-		locations[num_locations] = *locationConstruct(bnode, bnode->offset, bst->businesses_path);
-		bnode = bnode->next;
+		locations[num_locations] = *locationConstruct(found_node, bst->businesses_path);
+		//add the array of reviews to each location
+		num_reviews = getReviews(found_node->first_reviewoffset, found_node->id, reviews_stream, &reviews[num_locations]);
+		locations[num_locations].num_reviews = (uint32_t)num_reviews;
+
+		//print the array of reviews to ensure it works
+		int i;
+		for (i = 0; i < num_reviews; i++)
+		{
+			//printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_reviews].stars, reviews[num_reviews][i].text);
+		}
+
+		found_node = found_node->next;
 		num_locations++;
 	}
 	business->num_locations = num_locations;
 
+	//filter by state and zip code
+	int i;
+	int j;
+	for (i = 0; i < num_locations; ++i)
+	{
+		if (state != NULL)
+		{
+			if (strcmp(state, locations[i].state) != 0)
+			{
+				for (j = 0; j < num_locations-1; j++)
+				{
+					locations[i] = locations[i+1];
+				}
+				destroyLocation(&locations[num_locations]);
+				num_locations--;
+			}
+		}
+		if (zip_code != NULL)
+		{
+			if (strcmp(state, locations[i].state) != 0)
+			{
+				for (j = 0; j < num_locations-1; j++)
+				{
+					locations[i] = locations[i+1];
+				}
+				destroyLocation(&locations[num_locations]);
+				num_locations--;
+			}	
+		}
+	}
+
 	//sort the array of locations by state >> city >> address and print
 	qsort(locations, (size_t)num_locations, sizeof(struct Location), compar);
 
-	//initializing the review array
-	int i = 0;
-	int reviewbuffsize = 10;
-	reviews = malloc(reviewbuffsize * sizeof(struct Review));
-	long busidoffset;
-
-	//create and populate the review array for each location
-	FILE * reviews_stream = NULL;
-	reviews_stream = fopen(reviews_path, "r");
-	char * line = malloc(sizeof(char) * MAXREVIEW);
-	for (i = 0; i < num_locations; i++)
-	{
-		//get the business id, and offset for a location
-		int busid = bnodetraverse->id;
-		busidoffset = bnodetraverse->offset;
-		//seek the instance
-		fseek(reviews_stream, busidoffset, SEEK_SET);
-		//parse the stream for all of the reviews and populate the array
-		int num_reviews = 0;
-		while(!feof(reviews_stream))
-		{
-			//get a line, and initialize all buffers that will become attributes of a Review struct
-			fgets(line, MAXREVIEW, reviews_stream);
-			fputs(line, stderr);
-			char rid[MAXID]; //the read in business ID
-			int irid; //the integer version of rid
-			char stars[2]; //the number of stars
-			int istars; //the integer version of stars
-			char review_text[MAXREVIEW];
-			int a = 0;
-			int b = 0;
-			int cell_index = 0;
-
-			//read through the line populating ID, stars, and review_text
-			while(line[a] != '\0')
-			{
-				switch(cell_index)
-				{
-					case 0:
-						rid[b] = line[a];
-						b++;
-						rid[b] = '\0';
-						break;
-					case 1:
-						stars[b] = line[a];
-						b++;
-						stars[b] = '\0';
-						break;
-					case 5:
-						review_text[b] = line[a];
-						b++;
-						review_text[b] = '\0';
-						break;
-					default:
-						break;
-				}
-				a++;	
-			}
-			irid = atoi(rid);
-			istars = atoi(stars);
-			//printf("irid: %d, busid: %d\n", irid, busid);
-			if (irid == busid)
-			{
-				//ensure that the array is large enough
-				if (num_reviews >= (reviewbuffsize - 1))
-				{
-					reviewbuffsize *= 2;
-					reviews = realloc(reviews, reviewbuffsize * sizeof(struct Review));
-				}
-				reviews[num_reviews] = *reviewConstruct(istars, review_text);
-				//printf("stars: %d, text: %s\n",(int)reviews[num_reviews].stars, reviews[num_reviews].text);
-			}
-			else{
-				break;
-			}
-		}
-		//add the array of reviews to the Location struct
-		locations[i].reviews = reviews;
-		fclose(reviews_stream);
-		bnodetraverse = bnodetraverse->next; //move to next location
-		i++;
-	}
-
 	//add the location array to the Business struct
 	business->locations = locations;
-
 
 	return business;
 }
 
 void destroy_business_bst(struct YelpDataBST* bst){
 
-	/*free(bst->business_tree);
-	free(bst->review_offsets);
+	free(bst->business_tree);
 	free(bst->businesses_path);
 	free(bst->reviews_path);
-	free(bst);*/
+	free(bst);
 
 	return;
 }
