@@ -79,9 +79,11 @@ void Stack_popPopCombinePush(Stack * stack){
 	//pop first node
 	HuffNode * firsthuff = malloc(sizeof(HuffNode));
 	firsthuff = Stack_popFront(stack);
+	printf("firsthuff value is: %d\n", firsthuff->value);
 	//pop second node
 	HuffNode * secondhuff = malloc(sizeof(HuffNode));
 	secondhuff = Stack_popFront(stack);
+	printf("secondhuff value is: %d\n", secondhuff->value);
 	//make new hufftree
 	HuffNode * tree = HuffNode_create(firsthuff->value + secondhuff->value);
 	tree->right = firsthuff;
@@ -120,7 +122,16 @@ HuffNode * HuffTree_readTextHeader(FILE * fp){
 		}
 		if (line[i] == '0')
 		{
+			StackNode * traverse;
+			traverse = s->head;
+			while(traverse != NULL)
+			{
+				traverse = traverse->next;
+				num_nodes++;
+			}
+			printf("number of nodes is: %d\n", num_nodes);
 			//test to see if the stack contains only one element
+			printf("stack->head->next is: %p\n", s->head->next);
 			if (s->head->next == NULL)
 			{
 				printf("final is here\n");
@@ -128,8 +139,8 @@ HuffNode * HuffTree_readTextHeader(FILE * fp){
 				break;
 			}
 			//the stack contains more than one element
-			i++;
 			Stack_popPopCombinePush(s);
+			i++;
 		}
 		i++;
 	}
