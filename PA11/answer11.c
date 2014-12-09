@@ -105,6 +105,7 @@ HuffNode * HuffTree_readTextHeader(FILE * fp){
 	int i = 0;
 	while(line[i] != '\n')
 	{
+		printf("iteration: %d\n", i);
 		if (i > max_nodes-1)
 		{
 			max_nodes *= 2;
@@ -122,6 +123,7 @@ HuffNode * HuffTree_readTextHeader(FILE * fp){
 			//test to see if the stack contains only one element
 			if (s->head->next == NULL)
 			{
+				printf("final is here\n");
 				final = s->head->tree;
 				break;
 			}
