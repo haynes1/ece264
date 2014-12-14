@@ -11,7 +11,7 @@ void printTree(WordData * w)
 		return;
 	}
 	printTree(w->left);
-	printf("word: %s, frequency: %d\n", w->word, w->frequency);
+	//printf("word: (%s), frequency: %d, left: %p, right: %p\n", w->word, w->frequency, w->left, w->right);
 	printTree(w->right);
 	return;
 }
@@ -22,7 +22,7 @@ WordData * WordData_create(int leaf, char * word, struct WordData * left,  struc
 	WordData * w = malloc(sizeof(WordData));
 	w->leaf = leaf;
 	w->word = strdup(word);
-	w->frequency = 0;
+	w->frequency = 1;
 	w->left = left;
 	w->right = right;
 	return w;
@@ -37,7 +37,10 @@ WordData * WordData_insert(WordData * w, int leaf, char * word, int * num_unique
 	//w is empty, create node
 	if (w == NULL)
 	{
-		*num_unique_words++;
+		//printf("making new node: %s\n", word );
+		int uwords = *num_unique_words;
+		uwords++;
+		*num_unique_words = uwords;
 		return WordData_create(leaf, word, NULL, NULL);
 	}
 	//the words are the same, increment frequency
@@ -77,12 +80,15 @@ int numNodes(WordData *n)
 
 void arrayBuild(WordData ** array, WordData *w, int * index, int length)
 {
-	if (*index >= length)
+	int ind = *index;
+	if (ind >= length || w == NULL)
 	{
 		return;
 	}
-	array[*index] = w;
-	*index++;
+	//printf("ind: %d, word: (%s)\n", ind, w->word);
+	array[ind] = w;
+	ind++;
+	*index = ind;
 	arrayBuild(array, w->left, index,length);
 	arrayBuild(array, w->right, index, length);
 	return;
@@ -90,22 +96,23 @@ void arrayBuild(WordData ** array, WordData *w, int * index, int length)
 
 int comparFrequency(const void * a, const void * b)
 {
-	const struct WordData *p = (WordData *)a;
-	const struct WordData *q = (WordData*)b;
+	const struct WordData *l1 = *(WordData **)a;
+	const struct WordData *l2 = *(WordData **)b;
+	int comparison;
+	if (l1->frequency < l2->frequency)
+	{
+		comparison = 1;
+	}
+	else if (l1->frequency == l2->frequency)
+	{
+		comparison = 0;
+	}
+	else if (l1->frequency > l2->frequency)
+	{
+		comparison = -1;
+	}
 
-	if (p->frequency > q->frequency)
-	{
-		return -1;
-	}
-	if (p->frequency == q->frequency)
-	{
-		return 0;
-	}
-	if (p->frequency < q->frequency)
-	{
-		return 1;
-	}
-	return 0;
+	return comparison;
 }
 
 //=========================End of Helper Functions===============================
@@ -124,7 +131,7 @@ WordData * parseAndHuff(char * reviews_path)
 	int num_unique_words = 0;
 	int Word_buffer_position = 0;
 	int max_word_size = 50;
-	WordData * w;
+	WordData * w = NULL;
 	char * word_buffer = malloc(max_word_size * sizeof(char));
 	while(!feof(reviews_stream))
 	{
@@ -137,14 +144,15 @@ WordData * parseAndHuff(char * reviews_path)
 			if (word_buffer[0] != ' ' && word_buffer[0] != '\t' && word_buffer[0] != '\n' 
 				&& word_buffer[0] != '.' && word_buffer[0] != ',')
 			{
-				printf("word inserted: (%s) \tcurent character is: (%c)\n",word_buffer, current);
+				//printf("word inserted: (%s) \tcurent character is: (%c)\n",word_buffer, current);
 				w = WordData_insert(w, 0, word_buffer, &num_unique_words);
+				//printf("w->word: %s, w->frequency: %d, w->left: %p, w->right: %p\n",w->word, w->frequency, w->left, w->right);
 			}
 			//reset the buffer position, add current character to the buffer, and insert word
 			Word_buffer_position = 0;
 			word_buffer[Word_buffer_position] = (char)current;
 			word_buffer[Word_buffer_position+1] = '\0';
-			printf("word inserted: (%s) \n",word_buffer);
+			//printf("word inserted: (%s) \n",word_buffer);
 			w = WordData_insert(w, 0, word_buffer, &num_unique_words);
 		}
 		else
@@ -155,17 +163,17 @@ WordData * parseAndHuff(char * reviews_path)
 		}
 		i++;
 	}
-	free(reviews_stream);
+	free(word_buffer);
+	fclose(reviews_stream);
+	printTree(w);
 	printf("num of unique words is: %d\n",num_unique_words);
-	//printTree(w);
-	/*
+	
 	//create array from BST and sort it by frequency
-	int total_words = numNodes(w);
 	int index = 0;
-	WordData ** array = NULL;
-	arrayBuild(array, w, &index, total_words);
-	qsort(array, (size_t)total_words, sizeof(WordData *), comparFrequency);
-
+	WordData ** array = (WordData**)malloc(num_unique_words * sizeof(WordData *));
+	arrayBuild(array, w, &index, num_unique_words);
+	qsort(array, (size_t)num_unique_words, sizeof(WordData *), comparFrequency);
+/*
 	//build the huffman tree
 	int remaining_nodes = total_words;
 	while(remaining_nodes >= 1)
@@ -188,9 +196,9 @@ WordData * parseAndHuff(char * reviews_path)
 
 		}
 	}
-*/
-	//WordData * huffman_tree;// = array[remaining_nodes];
 
+	//WordData * huffman_tree;// = array[remaining_nodes];
+*/
 	return NULL;
 
 }
