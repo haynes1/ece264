@@ -18,10 +18,15 @@
 
 int main(int argc, char *argv[]){
 
-	char * reviews_path = "/home/pharaoh/ece264/solutions/ece264/PA10/Bonus/test.txt";
+	char * reviews_path = "/home/cheif/ece264/solutions/ece264/PA10/Bonus/test.txt";
 
-	WordData * huff_tree = parseAndHuff(reviews_path);
-	//printTree(huff_tree);
+	WordData * huffman_tree = parseAndHuff(reviews_path);
+	
+	outputHuffmanFile(huffman_tree, reviews_path);
+
+	char * huffed_path = "/home/cheif/ece264/solutions/ece264/PA10/Bonus/huffed.txt";
+
+	deHuffer(huffed_path, huffman_tree);
 
 	return EXIT_SUCCESS;
 }

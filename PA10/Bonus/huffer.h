@@ -10,7 +10,17 @@ typedef struct WordData{
 	int frequency; //the number of occurances of the word
 	struct WordData * left; //pointer to left child
 	struct WordData * right; //pointer to right child
-} WordData;
+}WordData;
+
+typedef struct WordCode{
+	char * word;
+	int code;
+}WordCode;
 
 //returns a huffman tree of words 
-WordData * parseAndHuff(char * reviews_path);
+WordData * parseAndHuff(char* reviews_path);
+
+void outputHuffmanFile(WordData * huffman_tree, char * reviews_path);
+
+void deHuffer(char * huffed_path, WordData * huffman_tree);
+
