@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "treefun.h"
 
 
 void printTree(WordData * w)
@@ -10,8 +11,8 @@ void printTree(WordData * w)
 	{
 		return;
 	}
-	printTree(w->left);
 	printf("word: (%s), frequency: %d, left: %p, right: %p\n", w->word, w->frequency, w->left, w->right);
+	printTree(w->left);
 	printTree(w->right);
 	return;
 }
@@ -22,7 +23,7 @@ WordData * WordData_create(int leaf, char * word, int frequency, struct WordData
 	WordData * w = malloc(sizeof(WordData));
 	w->leaf = leaf;
 	w->word = strdup(word);
-	w->frequency = 1;
+	w->frequency = frequency;
 	w->left = left;
 	w->right = right;
 	return w;
@@ -119,11 +120,57 @@ int findSmallest(WordData ** array, int length)
 {
 	int i = length-1;
 	int last_frequency = array[length]->frequency;
-	while(array[i]->frequency > last_frequency)
+	if (last_frequency < array[i]->frequency)
 	{
-		i--;
+		return length;
 	}
-	return i;
+	else if (last_frequency == array[i]->frequency)
+	{
+		//printf("there are more than one in a row from last\n");
+		while(array[i]->frequency == last_frequency)
+		{
+			i--;
+		}
+		//printf("last_frequency = %d, array[%d]->frequency = %d\n", last_frequency, i, array[i]->frequency);
+		if (array[i]->frequency > last_frequency)
+		{
+			//printf("	it will be the last: %d\n", length);
+			return length;
+		}
+		else
+		{
+			//printf("	it will be current: %d\n", i);
+			return i;
+		}
+	}
+	else if (last_frequency > array[i]->frequency)
+	{
+		return i;
+	}
+	return -1;
+}
+
+void arrayInsert(WordData ** array, WordData * w, int length, int f_ind, int s_ind)
+{
+	int i;
+	int min = f_ind < s_ind ? f_ind: s_ind;
+	array[min] = w;
+	for (i = min+1; i < length; i++)
+	{
+		array[i] = array[i+1];
+	}
+	//printf("print the array, first index: %d, second index: %d\n",f_ind, s_ind);
+	for (i = 0; i < length; i++)
+	{
+		//printf("%d)frequency: %d, leaf: %d, word: %s" ,i,  array[i]->frequency, array[i]->leaf, array[i]->word);
+		if (array[i]->leaf == 0)
+		{
+			//printf(":left->word is (%s), right->word is (%s)", array[i]->left->word, array[i]->right->word);
+		}
+		//printf("\n");
+	}
+	//free(array[length]);
+	return;
 }
 
 //=========================End of Helper Functions===============================
@@ -187,7 +234,7 @@ WordData * parseAndHuff(char * reviews_path)
 	printf("printing sorted array\n");
 	for (i = 0; i < num_unique_words; i++)
 	{
-		printf("frequency: %d, word: %s\n", array[i]->frequency, array[i]->word );
+		printf("%d) frequency: %d, leaf: %d, word: %s\n",i, array[i]->frequency, array[i]->leaf, array[i]->word );
 	}
 
 	//build the huffman tree
@@ -196,6 +243,8 @@ WordData * parseAndHuff(char * reviews_path)
 	WordData ** non_leaves = malloc(max_non_leaves * sizeof(WordData *));
 	int remaining_nodes = num_unique_words-1;
 	int combined_frequency;
+	int f_smallest_ind;
+	int s_smallest_ind;
 	while(remaining_nodes >= 1)
 	{
 		//ensure there is enough space in the array of non leaves
@@ -204,32 +253,46 @@ WordData * parseAndHuff(char * reviews_path)
 			max_non_leaves *= 2;
 			non_leaves = realloc(non_leaves, max_non_leaves * sizeof(WordData *));
 		}
-		if (array[remaining_nodes]->frequency <= array[remaining_nodes-1]->frequency || remaining_nodes ==1) //the tree node is still the smallest node
+		//take 2 lowest frequency nodes, combine them
+		f_smallest_ind = findSmallest(array, remaining_nodes);
+		if (f_smallest_ind == 0)
 		{
-			WordData * f_smallest = array[remaining_nodes];
-			WordData * s_smallest = array[remaining_nodes-1];
-			//printf("first smallest(%d): %s, second smallest(%d): %s\n",remaining_nodes, f_smallest->word, remaining_nodes, s_smallest->word);
-			combined_frequency = f_smallest->frequency + s_smallest->frequency;
-			non_leaves[num_non_leaves] = WordData_create(0, "non_leaf", combined_frequency, s_smallest, f_smallest);
-			remaining_nodes--;
-			array[remaining_nodes] = non_leaves[num_non_leaves];
+			s_smallest_ind = 1;
+		}
+		else if (f_smallest_ind != remaining_nodes && array[f_smallest_ind-1]->frequency > array[remaining_nodes]->frequency)
+		{
+			s_smallest_ind = remaining_nodes;
 		}
 		else
 		{
-			printf("in the else\n");
-			WordData * f_smallest = array[remaining_nodes-1];
-			WordData * s_smallest = array[remaining_nodes-2];
-			//printf("first smallest(%d): %s, second smallest(%d): %s\n",remaining_nodes-1, f_smallest->word, remaining_nodes-2, s_smallest->word);
-			combined_frequency = f_smallest->frequency + s_smallest->frequency;
-			non_leaves[num_non_leaves] = WordData_create(0, "non_leaf", combined_frequency, s_smallest, f_smallest);
-			remaining_nodes--;
-			array[remaining_nodes-1] = non_leaves[num_non_leaves];
+			s_smallest_ind = f_smallest_ind-1;
 		}
+		WordData * f_smallest = array[f_smallest_ind];
+		WordData * s_smallest = array[s_smallest_ind];
+		//ensure all leaf's children point to null
+		if (f_smallest->leaf == 1)
+		{
+			f_smallest->left = NULL;
+			f_smallest->right = NULL;
+		}
+		if (s_smallest->leaf == 1)
+		{
+			s_smallest->left = NULL;
+			s_smallest->right = NULL;
+		}
+		//printf("first smallest(%d)(%d): %s, second smallest(%d)(%d): %s\n",f_smallest_ind, f_smallest->frequency, f_smallest->word, 
+		//	s_smallest_ind, s_smallest->frequency, s_smallest->word);
+		combined_frequency = f_smallest->frequency + s_smallest->frequency;
+		non_leaves[num_non_leaves] = WordData_create(0, "non_leaf", combined_frequency, s_smallest, f_smallest);
+		//add that node back into the array, decrement array size 
+		arrayInsert(array, non_leaves[num_non_leaves], remaining_nodes, s_smallest_ind, f_smallest_ind);
+		remaining_nodes--;
 		num_non_leaves++;
 	}
 
 	WordData * huffman_tree = array[0];
-	//printTree(huffman_tree);
-	return NULL;
+
+	printTree(huffman_tree);
+	return huffman_tree;
 
 }
