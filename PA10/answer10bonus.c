@@ -203,7 +203,7 @@ long get_offset_of_first_review(int id, ReviewOffset ** array, int start, int en
 
 
 struct YelpDataBST* create_business_bst(const char* businesses_path,
-                                        const char* reviews_path)
+                                        const char* reviews_path, int * total_businesses)
 {
 	// open both files for reading and ensure that they both worked
 	FILE * businesses_stream = NULL;
@@ -302,13 +302,14 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	//sorting the array by name
 	qsort(treearray, (size_t)num_businesses-1, sizeof(BusinessTree), comparb);
 	free(treearray[num_businesses-1].name);
-	/*for (i = 0; i < num_businesses-1; i++)
+	for (i = 0; i < num_businesses-1; i++)
 	{
 		printf("%d) id: %d, name: %s, offset: %li, first review: %li\n", i,
 			treearray[i].id, treearray[i].name, treearray[i].offset, treearray[i].first_reviewoffset);
-	}*/
+	}
 	//free that annoying last component of the array
 
+	*total_businesses = num_businesses-1;
 
 	//creating new array as well as handle duplicates of the same name
 	int uniquenames[num_businesses-1];
@@ -356,10 +357,10 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	}
 
 	//print the int array uniquenames
-	/*for (i = 0; i < uniquenamespos; i++)
+	for (i = 0; i < uniquenamespos; i++)
 	{
 		printf("%d\n", uniquenames[i]);
-	}*/
+	}
 
 	//building the BST
 	buildTree(uniquenames, treearray, 0, uniquenamespos);
@@ -663,7 +664,7 @@ struct Review * getReviews(FILE * reviews_stream, int id, long first_reviewoffse
 			//printf("id: %d, stars: %d, text: %s\n", atoi(read_id), atoi(stars) , text);
 		}
 	}while(atoi(read_id) == id);
-	//free(line);
+	free(line);
 	*num_rev = num_reviews;
 	return reviews;
 }
@@ -688,7 +689,7 @@ struct Business* populateBusiness(BusinessTree * node, char* name, char * busine
 	struct Location * locations = NULL; //array of locations for the Business struct
 	struct Review ** reviews = NULL;
 	FILE * reviews_stream = fopen(reviews_path, "r");
-	b->name = node->name;
+	b->name = strdup(node->name);
 
 	b->locations = NULL;
 	int locationbuffersize = 10;
@@ -819,6 +820,7 @@ struct Business ** get_business_reviews(struct YelpDataBST* bst,
 		b_array[i] = populateBusiness(found_array[i], found_array[i]->name, bst->businesses_path, bst->reviews_path, state, zip_code, 
 			words, num_words, num_businesses);
 	}
+	free(found_array);
 
 	return b_array;
 }
@@ -850,15 +852,29 @@ int numNodes(BusinessTree *n)
     }
 }
 
-void destroyBusinessTree(BusinessTree * t)
+void destroyTheNames(BusinessTree * n)
+{
+	if (n == NULL)
+	{
+		return;
+	}
+	destroyTheNames(n->left);
+	destroyTheNames(n->next);
+	destroyTheNames(n->right);
+	free(n->name);
+	return;
+}
+
+void destroyBusinessTree(BusinessTree * t, int num_nodes)
 {	
+	//frees this as though it were an array starting from lefty
 	BusinessTree * lefty = getLefty(t);
 	//printf("lefty's name is: %s\n", lefty->name);
-	int num_nodes = numNodes(t);
 	int i;
+	printf("number of nodes is %d\n", num_nodes);
 	for (i = 0; i < num_nodes; ++i)
 	{
-		//test to see if the node goes deep
+		//test to see if the node goes deep, free its stuff
 		if (lefty[i].next != NULL)
 		{
 			BusinessTree * a = lefty->next;
@@ -871,6 +887,7 @@ void destroyBusinessTree(BusinessTree * t)
 			}
 		}
 		free(lefty[i].name);
+		//printf("freeing lefty's %dth node\n", i );
 	}
 	free(lefty);
 	return;
@@ -892,9 +909,10 @@ void destroyLocations(struct Location * l, int num_locations)
 	return;
 }
 
-void destroy_business_bst(struct YelpDataBST* bst)
+void destroy_business_bst(struct YelpDataBST* bst, int num_businesses)
 {
-	destroyBusinessTree(bst->business_tree);
+	//destroyTheNames(bst->business_tree);
+	destroyBusinessTree(bst->business_tree, num_businesses);
 	free(bst);
 	return;
 }

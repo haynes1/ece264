@@ -9,7 +9,8 @@ int main(int argc, char *argv[]){
 	char * businesses_path = "/home/cheif/ece264/solutions/ece264/PA10/businesses.short.tsv";
 	char * reviews_path = "/home/cheif/ece264/solutions/ece264/PA10/reviews.short.tsv";
 	struct YelpDataBST * bst = NULL;
-	bst = create_business_bst(businesses_path, reviews_path);
+	int total_businesses = 0;
+	bst = create_business_bst(businesses_path, reviews_path, &total_businesses);
 	printf("testing search by prefix\n");
 	//int num_businesses = 0;
 	/*BusinessTree * tree = bst->business_tree;
@@ -28,8 +29,10 @@ int main(int argc, char *argv[]){
 	words[3] = "banana";
 	int num_businesses = 0;
 	b = get_business_reviews(bst, "Starbucks", NULL, NULL, words, 4, &num_businesses);
-	destroy_business_bst(bst);
+	destroy_business_bst(bst, total_businesses);
 	destroy_business_result(b, num_businesses);
+
+	free(words);
 	
 	return EXIT_SUCCESS;
 }

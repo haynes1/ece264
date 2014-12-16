@@ -34,7 +34,7 @@ struct YelpDataBST;
  */
 
 struct YelpDataBST* create_business_bst(const char* businesses_path,
-                                        const char* reviews_path);
+                                        const char* reviews_path, int * total_businesses);
 /* This function reads the two files and creates an index that can be used
  * to search the data and quickly retrieve the reviews.  You must *not* store
  * all of the review text in memory.  Your structure should store the file
@@ -81,7 +81,7 @@ struct Business** get_business_reviews(struct YelpDataBST* bst,
  */
 
 
-void destroy_business_bst(struct YelpDataBST* bst);
+void destroy_business_bst(struct YelpDataBST* bst, int num_businesses);
 /* Deallocate all memory allocated for the object returned by
  * create_business_bst(..) and close the files. */
 
