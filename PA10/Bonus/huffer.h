@@ -8,7 +8,9 @@ typedef struct WordData{
 	int leaf; //will be 1 if the node is a leaf, 0 otherwise
 	char * word; //the word itself
 	int frequency; //the number of occurances of the word
-	char * code;
+	char * code; //the word's code
+	char * leftstring; //string of left chilren's words
+	char * rightstring; //string of right children's words
 	struct WordData * left; //pointer to left child
 	struct WordData * right; //pointer to right child
 }WordData;

@@ -17,7 +17,8 @@ void printTree(WordData * w)
 }
 
 //===================parseAndHuff Helper Functions=============================
-WordData * WordData_create(int leaf, char * word, int frequency, struct WordData * left,  struct WordData * right)
+WordData * WordData_create(int leaf, char * word, int frequency, struct WordData * left,  struct WordData * right, 
+	char * leftstring, char * rightstring)
 {
 	WordData * w = malloc(sizeof(WordData));
 	w->code = NULL;
@@ -42,7 +43,7 @@ WordData * WordData_insert(WordData * w, char * word, int * num_unique_words)
 		int uwords = *num_unique_words;
 		uwords++;
 		*num_unique_words = uwords;
-		return WordData_create(1, word, 1, NULL, NULL);
+		return WordData_create(1, word, 1, NULL, NULL, NULL, NULL);
 	}
 	//the words are the same, increment frequency
 	if (strcmp(word, w->word) == 0)
@@ -174,6 +175,18 @@ void arrayInsert(WordData ** array, WordData * w, int length, int f_ind, int s_i
 	return;
 }
 
+char * createCombinedWord(char * a, char *b)
+{
+	int l1 = strlen(a);
+	int l2 = strlen(b);
+	int length = l1 + l2 + 1;
+	char * combined = malloc(length * sizeof(char));
+	memcpy(combined, a, l1+1);
+	combined = strcat(combined, b);
+	printf("a: %s, b: %s, combined: %s\n",a, b, combined);
+	return combined;
+}
+
 //=========================End of Helper Functions===============================
 
 WordData * parseAndHuff(char * reviews_path, int * word_count)
@@ -282,15 +295,17 @@ WordData * parseAndHuff(char * reviews_path, int * word_count)
 			s_smallest->left = NULL;
 			s_smallest->right = NULL;
 		}
-		//strcat(f_smallest->word,s_smallest->word)
+		char * combined_word = createCombinedWord(f_smallest->word, s_smallest->word);
 		//printf("first smallest(%d)(%d): %s, second smallest(%d)(%d): %s\n",f_smallest_ind, f_smallest->frequency, f_smallest->word, 
 		//	s_smallest_ind, s_smallest->frequency, s_smallest->word);
 		combined_frequency = f_smallest->frequency + s_smallest->frequency;
-		non_leaves[num_non_leaves] = WordData_create(0, "non leaf" , combined_frequency, f_smallest, s_smallest);
+		non_leaves[num_non_leaves] = WordData_create(0, combined_word , combined_frequency,
+			 f_smallest, s_smallest, f_smallest->word, s_smallest->word);
 		//add that node back into the array, decrement array size 
 		arrayInsert(array, non_leaves[num_non_leaves], remaining_nodes, s_smallest_ind, f_smallest_ind);
 		remaining_nodes--;
 		num_non_leaves++;
+		free(combined_word);
 	}
 
 	WordData * huffman_tree = array[0];
