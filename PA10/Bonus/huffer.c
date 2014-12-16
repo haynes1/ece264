@@ -10,8 +10,14 @@ void printTree(WordData * w)
 	{
 		return;
 	}
-	printf("word: (%s), frequency: %d, left: %p, right: %p\n", w->word, w->frequency, w->left, w->right);
-	printf("leftstring (%s), rightstring (%s)\n\n", w->leftstring, w->rightstring);
+	printf("frequency: %d, left: %p, right: %p", w->frequency, w->left, w->right);
+	if (w->subtree == 1)
+	{
+		printf(": it is a subtree\n");
+		return;
+	}
+	printf("\n");
+	//printf("leftstring (%s), rightstring (%s)\n\n", w->leftstring, w->rightstring);
 	printTree(w->left);
 	printTree(w->right);
 	return;
@@ -34,7 +40,7 @@ void printLeaves(WordData * w)
 
 //===================parseAndHuff Helper Functions=============================
 WordData * WordData_create(int leaf, char * word, int frequency, struct WordData * left,  struct WordData * right, 
-	char * leftstring, char * rightstring)
+	char * leftstring, char * rightstring, int num_leaves)
 {
 	WordData * w = malloc(sizeof(WordData));
 	w->code = NULL;
@@ -45,6 +51,7 @@ WordData * WordData_create(int leaf, char * word, int frequency, struct WordData
 	w->right = right;
 	w->leftstring = leftstring;
 	w->rightstring = rightstring;
+	w->num_leaves = num_leaves;
 	return w;
 }
 
@@ -61,7 +68,7 @@ WordData * WordData_insert(WordData * w, char * word, int * num_unique_words)
 		int uwords = *num_unique_words;
 		uwords++;
 		*num_unique_words = uwords;
-		return WordData_create(1, word, 1, NULL, NULL, NULL, NULL);
+		return WordData_create(1, word, 1, NULL, NULL, NULL, NULL, 1);
 	}
 	//the words are the same, increment frequency
 	if (strcmp(word, w->word) == 0)
@@ -296,8 +303,9 @@ WordData ** parseAndHuff(char * reviews_path, int * word_count)
 
 	//subtree stuff
 	int max_subtree_leaves = 1000;
-	int num_subtrees = num_unique_words / max_subtree_leaves;
-	subtree_array = malloc(num_subtrees * sizeof(WordData *)); //the 0th tree is the entire huffman tree
+	int total_subtrees = num_unique_words / max_subtree_leaves;
+	WordData ** subtree_array = malloc(total_subtrees + 1 * sizeof(WordData *)); //the 0th tree is the entire huffman tree
+	int current_subtree = 1;
 
 	//build the huffman tree
 	int max_non_leaves = 1000;
@@ -343,11 +351,20 @@ WordData ** parseAndHuff(char * reviews_path, int * word_count)
 			s_smallest->right = NULL;
 		}
 		char * combined_word = createCombinedWord(f_smallest->word, s_smallest->word);
+		int num_leaves = f_smallest->num_leaves + s_smallest->num_leaves;
 		//printf("first smallest(%d)(%d): %s, second smallest(%d)(%d): %s\n",f_smallest_ind, f_smallest->frequency, f_smallest->word, 
 		//	s_smallest_ind, s_smallest->frequency, s_smallest->word);
 		combined_frequency = f_smallest->frequency + s_smallest->frequency;
 		non_leaves[num_non_leaves] = WordData_create(0, combined_word , combined_frequency,
-			 f_smallest, s_smallest, f_smallest->word, s_smallest->word);
+			 f_smallest, s_smallest, f_smallest->word, s_smallest->word, num_leaves);
+		//if it is a subtree add it to the array
+		if (num_leaves >= max_subtree_leaves)
+		{
+			subtree_array[current_subtree] = non_leaves[num_non_leaves];
+			subtree_array[current_subtree]->subtree = 1;
+			non_leaves[num_non_leaves]->num_leaves = 0;
+			current_subtree++;
+		}
 		//add that node back into the array, decrement array size 
 		arrayInsert(array, non_leaves[num_non_leaves], remaining_nodes, s_smallest_ind, f_smallest_ind);
 		remaining_nodes--;
@@ -356,9 +373,10 @@ WordData ** parseAndHuff(char * reviews_path, int * word_count)
 	}
 
 	WordData * huffman_tree = array[0];
+	subtree_array[0] = huffman_tree;
 	free(array);
 	free(non_leaves);
-	//printTree(huffman_tree);
+	printTree(subtree_array[0]);
 	return subtree_array;
 }
 
