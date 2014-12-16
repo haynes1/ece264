@@ -20,13 +20,18 @@ int main(int argc, char *argv[]){
 
 	char * reviews_path = "/home/cheif/ece264/solutions/ece264/PA10/Bonus/test.txt";
 
-	WordData * huffman_tree = parseAndHuff(reviews_path);
+	int num_words = 0;
+
+	WordData * huffman_tree = parseAndHuff(reviews_path, &num_words);
+	printf("num of unique words is: %d\n",num_words);
 	
-	outputHuffmanFile(huffman_tree, reviews_path);
+	outputHuffmanFile(huffman_tree, reviews_path, num_words);
 
 	char * huffed_path = "/home/cheif/ece264/solutions/ece264/PA10/Bonus/huffed.txt";
 
 	deHuffer(huffed_path, huffman_tree);
+
+	freeHuffmanTree(huffman_tree);
 
 	return EXIT_SUCCESS;
 }

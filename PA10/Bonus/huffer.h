@@ -8,19 +8,22 @@ typedef struct WordData{
 	int leaf; //will be 1 if the node is a leaf, 0 otherwise
 	char * word; //the word itself
 	int frequency; //the number of occurances of the word
+	char * code;
 	struct WordData * left; //pointer to left child
 	struct WordData * right; //pointer to right child
 }WordData;
 
 typedef struct WordCode{
 	char * word;
-	int code;
+	char * code;
 }WordCode;
 
 //returns a huffman tree of words 
-WordData * parseAndHuff(char* reviews_path);
+WordData * parseAndHuff(char* reviews_path, int * word_count);
 
-void outputHuffmanFile(WordData * huffman_tree, char * reviews_path);
+void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_count);
 
 void deHuffer(char * huffed_path, WordData * huffman_tree);
+
+void freeHuffmanTree(WordData * t);
 
