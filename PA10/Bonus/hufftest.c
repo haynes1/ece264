@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "huffer.h"
+#include "oldhuffer.h"
 
 /*void printTree(WordData * w)
 {
@@ -18,7 +18,7 @@
 
 int main(int argc, char *argv[]){
 
-	char * reviews_path = "/home/cheif/ece264/solutions/ece264/PA10/Bonus/test.txt";
+	char * reviews_path = "/home/cheif/ece264/solutions/ece264/PA10/reviews.short.tsv";
 
 	int num_words = 0;
 
