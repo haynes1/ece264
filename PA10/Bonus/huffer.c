@@ -331,7 +331,7 @@ void moveThroughTree(WordCode ** array, WordData * n, char * code, int code_leng
 			*max = t_max;
 			array = realloc(array, t_max * sizeof(WordCode));
 		}
-		array[num] = WordCode_create(n->word, strdup(code));
+		array[num] = WordCode_create(n->word, code);
 		num++;
 		*num_words = num;
 		return;
@@ -416,12 +416,12 @@ WordCode ** createCodeArray(WordData * huffman_tree, int word_count)
 	int num = 0;
 	int max_word_codes = 1000;
 	WordCode ** code_array = malloc(max_word_codes * sizeof(WordCode *));
-	char * zero = malloc(2 * sizeof(char));
+	/*char * zero = malloc(2 * sizeof(char));
 	zero[0] = '0';
 	char * one = malloc(2 * sizeof(char));
-	one[0] = '1';
-	moveThroughTree(code_array, huffman_tree->left, zero, 1, &num, &max_word_codes);
-	moveThroughTree(code_array, huffman_tree->right, one, 1, &num, &max_word_codes);
+	one[0] = '1';*/
+	moveThroughTree(code_array, huffman_tree->left, "0", 1, &num, &max_word_codes);
+	moveThroughTree(code_array, huffman_tree->right, "1", 1, &num, &max_word_codes);
 	printf("num words found in in createCodeArray = %d\n", num);
 	qsort(code_array, (size_t)word_count, sizeof(WordCode *), comparCodes);
 	return code_array;
