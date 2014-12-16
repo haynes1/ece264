@@ -472,7 +472,7 @@ void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_co
 	FILE * reviews_stream = fopen(reviews_path, "r");
 	FILE * output = fopen("huffed.txt", "w");
 	int word_buffer_position = 0;
-	int max_word_size = 50;
+	int max_word_size = 250;
 	char * word_buffer = malloc(max_word_size * sizeof(char));
 	char * output_code;
 	while(!feof(reviews_stream))
