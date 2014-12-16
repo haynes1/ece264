@@ -27,6 +27,8 @@ WordData * WordData_create(int leaf, char * word, int frequency, struct WordData
 	w->frequency = frequency;
 	w->left = left;
 	w->right = right;
+	w->leftstring = leftstring;
+	w->rightstring = rightstring;
 	return w;
 }
 
@@ -177,13 +179,37 @@ void arrayInsert(WordData ** array, WordData * w, int length, int f_ind, int s_i
 
 char * createCombinedWord(char * a, char *b)
 {
+	char * combined;
 	int l1 = strlen(a);
 	int l2 = strlen(b);
-	int length = l1 + l2 + 1;
-	char * combined = malloc(length * sizeof(char));
-	memcpy(combined, a, l1+1);
+	int length = l1 + l2 + 4;//enough to hold it all
+	combined = malloc(length * sizeof(char));
+	//ensure it starts with the '|'
+	if (a[0] != '|')
+	{
+		combined[0] = '|';
+		combined[1] = '\0';
+		combined = strcat(combined, a);
+		l1++;
+	}
+	else
+	{
+		combined = memcpy(combined, a, l1+1);
+	}
+	//ensure they are separated by the '|'
+	if (b[0] != '|')
+	{
+		combined[l1] = '|';
+		combined[l1+1] = '\0';
+	}
 	combined = strcat(combined, b);
-	printf("a: %s, b: %s, combined: %s\n",a, b, combined);
+	//ensure there is the ending '\'
+	int len = strlen(combined);
+	if (combined[len-1] != '|')
+	{
+		combined[len] = '|';
+		combined[len+1] = '\0';
+	}
 	return combined;
 }
 
@@ -334,162 +360,65 @@ char * nextCode(char * current_code, int code_length, char direction)
 	return next_code;
 }
 
-void moveThroughTree(WordCode ** array, WordData * n, char * code, int code_length, int *num_words, int * max)
+char * findWord(char * key, WordData * n, char * code, int code_length)
 {
-	n->code = code;
-	if (n->leaf == 1)
+	char * found_code;
+	//if the node has no code, give it the current code
+	if (n->code == NULL)
 	{
-		int num = *num_words;
-		int t_max = *max;
-		//ensure there is enough room in the array of WordCodes
-		if (num >= t_max-1)
-		{
-			t_max *= 2;
-			void * tmp = realloc(array, t_max * sizeof(WordCode *));
-			if (tmp != NULL)
-			{
-				array = tmp;
-			}
-			else
-			{
-				printf("failed to realloc, everything will die\n");
-			}
-			*max = t_max;
-		}
-		array[num] = WordCode_create(n->word, code);
-		num++;
-		*num_words = num;
-		return;
+		n->code = code;
 	}
-	else
+	//found the key
+	if (strcmp(key, n->word) == 0)
 	{
-		moveThroughTree(array, n->left, nextCode(code, code_length, '0'), code_length+1, num_words, max);
-		moveThroughTree(array, n->right, nextCode(code, code_length, '1'), code_length+1, num_words, max);
-		//free(code);
+		found_code = n->code;
 	}
+	else if (strstr(n->leftstring, key) != NULL)
+	{
+		found_code = findWord(key, n->left, nextCode(code, code_length, '0'), code_length+1);
+	}
+	else if (strstr(n->rightstring, key) != NULL)
+	{
+		found_code = findWord(key, n->right, nextCode(code, code_length, '1'), code_length+1);
+	}
+
+	return found_code;
+}
+
+void getCodeAndWrite(WordData * tree, char * key, FILE * output)
+{
+	char * found_code;
+	if (strstr(tree->leftstring, key) != 0)
+	{
+		char * zero = malloc(2 * sizeof(char));
+		zero[0] = '0';
+		zero[1] = '\0';
+		found_code = findWord(key, tree, zero, 0);
+	}
+	else if (strstr(tree->rightstring, key) != 0)
+	{
+		char * one = malloc(2 * sizeof(char));
+		one[0] = '0';
+		one[1] = '\0';
+		found_code = findWord(key, tree, one, 0);
+	}
+	//printf("found the code (%s) for word (%s)\n", found_code, key);
+	fputs(found_code, output);
+
 	return;
 }
-
-int comparCodes(const void * a, const void * b)
-{
-	const struct WordCode *l1 = *(WordCode **)a;
-	const struct WordCode *l2 = *(WordCode **)b;
-
-	return(strcmp(l1->word, l2->word));
-}
-
-char * itoa(int value){
-	if (value == 0)
-	{
-		return strdup("0");
-	}
-	int i = 0;
-	char * str = malloc(40 * sizeof(char));
-	while(value != 0)
-	{		
-		str[i] = (value % 10) + 48;
-		value /= 10;
-		i++;
-	}
-	str[i] = '\0';
-	//reverse the string
-	int c = strlen(str);
-	char * rev = malloc(c + 1 * sizeof(char));
-	c--;
-	for (i = 0; i < strlen(str); i++)
-	{
-		rev[i] = str[c];
-		c--;
-	}
-	rev[i] = '\0';
-	free(str);
-	return rev;
-}
-
-char * searchCode(char * word, WordCode ** array, int start, int end)
-{
-	char * code;
-	int mid = (start + end) / 2;
-	char * mid_word = array[mid]->word;
-	if (start > end)
-	{
-		//printf("couldn't find word\n");
-		return "error";
-	}
-	//found the word
-	if (strcmp(word, mid_word) == 0)
-	{
-		code = array[mid]->code;
-	}
-	//go left
-	else if (strcmp(word, mid_word) < 0)
-	{
-		code = searchCode(word, array, start, mid-1);
-	}
-	//go right
-	else if (strcmp(word, mid_word) > 0)
-	{
-		code = searchCode(word, array, mid+1, end);
-	}
-
-	return code;
-}
-
-WordCode ** createCodeArray(WordData * huffman_tree, int word_count)
-{
-	//make array of WordCodes
-	int num = 0;
-	int max_word_codes = word_count + 1;
-	WordCode ** code_array = malloc(max_word_codes * sizeof(WordCode *));
-	/*char * zero = malloc(2 * sizeof(char));
-	zero[0] = '0';
-	zero[1] = '\0';
-	char * one = malloc(2 * sizeof(char));
-	one[0] = '1';
-	one[1] = '\0';*/
-	char * nothing = malloc(sizeof(char));
-	nothing[0] = '\0';
-	moveThroughTree(code_array, huffman_tree, nothing, 0, &num, &max_word_codes);
-	//moveThroughTree(code_array, huffman_tree->right, one, 1, &num, &max_word_codes);
-	printf("num words found in in createCodeArray = %d\n", num);
-	qsort(code_array, (size_t)word_count, sizeof(WordCode *), comparCodes);
-	return code_array;
-}
-
-void freeCodeArray(WordCode** array, int length)
-{
-	int i;
-	for (i = 0; i < length; i++)
-	{
-		free(array[i]->word);
-		//free(array[i]->code);
-		free(array[i]);
-	}
-	free(array);
-	return;
-}
-
 
 //=============================END Helper Functions==============================
 
 void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_count)
 {
+	printTree(huffman_tree);
 	int i;
-	WordCode ** code_array = createCodeArray(huffman_tree, word_count);
-	/*printf("testing the wordCode array: contains %d words\n", num_words);
-	for (i = 0; i < num_words; i++)
-	{
-		printf("%d) word: (%s) code: %s\n", i, code_array[i]->word, code_array[i]->code);
-	}*/
-	//printTree(huffman_tree);
-
-	//using the array of WordCodes output to a file
 	FILE * reviews_stream = fopen(reviews_path, "r");
 	FILE * output = fopen("huffed.txt", "w");
 	int word_buffer_position = 0;
 	int max_word_size = 250;
 	char * word_buffer = malloc(max_word_size * sizeof(char));
-	char * output_code;
 	while(!feof(reviews_stream))
 	{
 		int current = fgetc(reviews_stream);
@@ -500,17 +429,13 @@ void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_co
 			if (word_buffer[0] != ' ' && word_buffer[0] != '\t' && word_buffer[0] != '\n' 
 				&& word_buffer[0] != '.' && word_buffer[0] != ',' && word_buffer[0] != '(' && word_buffer[0] != ')')
 			{
-				output_code = searchCode(word_buffer, code_array, 0, word_count-1);
-				fputs(output_code, output);
-				//printf("code written: (%s)\n", s_output_code);
+				getCodeAndWrite(huffman_tree, word_buffer, output);
 			}
 			//reset the buffer position, add current character to the buffer, and insert word
 			word_buffer_position = 0;
 			word_buffer[word_buffer_position] = (char)current;
 			word_buffer[word_buffer_position+1] = '\0';
-			output_code = searchCode(word_buffer, code_array, 0, word_count-1);
-			fputs(output_code, output);
-			//printf("code written: (%s)\n", s_output_code);
+			getCodeAndWrite(huffman_tree, word_buffer, output);
 		}
 		else
 		{
@@ -523,7 +448,6 @@ void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_co
 	free(word_buffer);
 	fclose(reviews_stream);
 	fclose(output);
-	freeCodeArray(code_array, word_count);
 
 	return;
 }
