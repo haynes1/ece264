@@ -20,6 +20,7 @@ void printTree(WordData * w)
 WordData * WordData_create(int leaf, char * word, int frequency, struct WordData * left,  struct WordData * right)
 {
 	WordData * w = malloc(sizeof(WordData));
+	w->code = NULL;
 	w->leaf = leaf;
 	w->word = strdup(word);
 	w->frequency = frequency;
@@ -188,7 +189,7 @@ WordData * parseAndHuff(char * reviews_path, int * word_count)
 	//create BST of WordData structs by name
 	int num_unique_words = 0;
 	int word_buffer_position = 0;
-	int max_word_size = 50;
+	int max_word_size = 200;
 	WordData * w = NULL;
 	char * word_buffer = malloc(max_word_size * sizeof(char));
 	while(!feof(reviews_stream))
@@ -293,7 +294,8 @@ WordData * parseAndHuff(char * reviews_path, int * word_count)
 	}
 
 	WordData * huffman_tree = array[0];
-
+	free(array);
+	free(non_leaves);
 	//printTree(huffman_tree);
 	return huffman_tree;
 }
@@ -323,13 +325,21 @@ void moveThroughTree(WordCode ** array, WordData * n, char * code, int code_leng
 	if (n->leaf == 1)
 	{
 		int num = *num_words;
+		int t_max = *max;
 		//ensure there is enough room in the array of WordCodes
-		if (num > *max)
+		if (num >= t_max-1)
 		{
-			int t_max = *max;
 			t_max *= 2;
+			void * tmp = realloc(array, t_max * sizeof(WordCode *));
+			if (tmp != NULL)
+			{
+				array = tmp;
+			}
+			else
+			{
+				printf("failed to realloc, everything will die\n");
+			}
 			*max = t_max;
-			array = realloc(array, t_max * sizeof(WordCode));
 		}
 		array[num] = WordCode_create(n->word, code);
 		num++;
@@ -414,14 +424,18 @@ WordCode ** createCodeArray(WordData * huffman_tree, int word_count)
 {
 	//make array of WordCodes
 	int num = 0;
-	int max_word_codes = 1000;
+	int max_word_codes = word_count + 1;
 	WordCode ** code_array = malloc(max_word_codes * sizeof(WordCode *));
 	/*char * zero = malloc(2 * sizeof(char));
 	zero[0] = '0';
+	zero[1] = '\0';
 	char * one = malloc(2 * sizeof(char));
-	one[0] = '1';*/
-	moveThroughTree(code_array, huffman_tree->left, "0", 1, &num, &max_word_codes);
-	moveThroughTree(code_array, huffman_tree->right, "1", 1, &num, &max_word_codes);
+	one[0] = '1';
+	one[1] = '\0';*/
+	char * nothing = malloc(sizeof(char));
+	nothing[0] = '\0';
+	moveThroughTree(code_array, huffman_tree, nothing, 0, &num, &max_word_codes);
+	//moveThroughTree(code_array, huffman_tree->right, one, 1, &num, &max_word_codes);
 	printf("num words found in in createCodeArray = %d\n", num);
 	qsort(code_array, (size_t)word_count, sizeof(WordCode *), comparCodes);
 	return code_array;
@@ -436,6 +450,7 @@ void freeCodeArray(WordCode** array, int length)
 		//free(array[i]->code);
 		free(array[i]);
 	}
+	free(array);
 	return;
 }
 
@@ -553,6 +568,7 @@ void deHuffer(char * huffed_path, WordData * huffman_tree)
 		}
 		i++;
 	}
+	fclose(huffed);
 	fclose(dehuffed);
 	return;
 }
