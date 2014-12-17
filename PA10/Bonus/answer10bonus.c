@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include "answer10bonus.h"
 
 #define MAXLINE 500
@@ -375,22 +376,9 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 int foundPrefix(char * haystack, char * needle)
 {
 	int i;
-	int h_current;
-	int n_current;
 	for (i = 0; i < strlen(needle); i++)
 	{
-		haystack[i] = (int)h_current;
-		needle[i] = (int)n_current;
-		//ensure that haystack and needle are not capital
-		if (haystack[i] <= 'A' || haystack[i] >= 'Z')
-		{
-			h_current += 32;
-		}
-		if (needle[i] <= 'A' || needle[i] >= 'Z')
-		{
-			n_current += 32;
-		}
-		if (h_current != n_current)
+		if (tolower(haystack[i]) != tolower(needle[i]))
 		{
 			return 0;
 		}
@@ -455,6 +443,10 @@ struct BusinessTree ** searchTree(BusinessTree * tn , char * prefix, int * num_b
 	BusinessTree ** array = malloc(max_businesses * sizeof(BusinessTree *));
 	//find the first node containing the prefix
 	BusinessTree * first_node = findPrefixTree(tn, prefix);
+	if (first_node == NULL)
+	{
+		return NULL;
+	}
 	//populate the populateBusinessArray
 	populateBusinessArray(array, first_node, prefix, num_businesses, max_businesses);
 
@@ -804,6 +796,7 @@ struct Business* populateBusiness(BusinessTree * node, char* name, char * busine
 struct Business ** get_business_reviews(struct YelpDataBST* bst,
                                       char* name, char* state, char* zip_code, char ** words, int num_words, int *num_businesses)
 {
+	
 	int i;
 	//create the structs and open the streams
 	BusinessTree ** found_array;
@@ -811,12 +804,11 @@ struct Business ** get_business_reviews(struct YelpDataBST* bst,
 	//printf("the top node is) id: %d, name: %s, left: %p, right: %p\n", top_node->id,top_node->name,top_node->left,top_node->right);
 	//create array of BusinessTree * and find the number of businesses, and malloc the Business array
 	found_array = searchTree(top_node, name, num_businesses);
-	struct Business ** b_array = malloc(*num_businesses * sizeof(struct Business *));
-	/*printf("num_businesses is: %d\nTesting found_array\n", *num_businesses);
-	for (i = 0; i < *num_businesses; ++i)
+	if (found_array == NULL)
 	{
-		printf("name: %s\n", found_array[i]->name);
-	}*/
+		return NULL;
+	}
+	struct Business ** b_array = malloc(*num_businesses * sizeof(struct Business *));
 
 	//populate the businesses
 	for (i = 0; i < *num_businesses; i++)
@@ -941,3 +933,82 @@ void destroy_business_result(struct Business** b, int num_businesses){
 	free(b);
 	return;
 }
+
+
+void noNameYesWords(char ** words, int num_words, const char * reviews_path)
+{
+ 	printf("Searched for words without a business name. This will take some time\n");
+ 	FILE * reviews_stream = fopen(reviews_path, "r");
+ 	if (reviews_stream == NULL)
+ 	{
+ 		printf("failed to open reviews.tsv\n");
+ 	}
+ 	//parse each line of reviews.tsv for the stuff	char read_id[MAXID];
+	char stars[2];
+	char text[100000];
+	char * line = malloc(sizeof(char) * 100000);
+	if (line == NULL)
+	{
+		printf("failed to malloc a line in function: getReviews\n");
+		return;
+	}
+	int cell_index;
+	int num_reviews = 0;
+	int contains_words; //1 if the string contains the words
+	int word_iterator;
+	//get lines and do the thing to them
+	while(!feof(reviews_stream))
+	{
+		contains_words = 0;
+		fgets(line, 100000, reviews_stream);
+		int c = 0;
+		int a = 0;
+		cell_index = 0;
+		//check to see if the line contains the words (if yes, contains_words = num_words)
+		if (words != NULL && num_words != 0)
+		{
+			for (word_iterator = 0; word_iterator < num_words; word_iterator++)
+			{
+				if (strstr(line, words[word_iterator]) != NULL)
+				{
+					contains_words++;
+				}
+			}
+		}
+		if(contains_words == num_words)
+		{
+			while(line[a] != '\0')
+			{
+				if (line[a] == '\t') //test to see if we've moved to a new cell
+				{
+					cell_index++;
+					c = 0;
+					a++; //to move past the '\t'
+				}
+				switch(cell_index)
+				{
+					case 1:
+						stars[c] = line[a];
+						c++;
+						stars[c] = '\0';
+						break;
+					case 5:
+						text[c] = line[a];
+						c++;
+						text[c] = '\0';
+						break;
+					default:
+						break;
+				}
+				a++;
+			}
+			printf("Review %d) Stars = %d\n", num_reviews, atoi(stars));
+			printf("%s\n", text);
+			num_reviews++;
+		}
+	}
+	free(line);
+
+ 	return;
+}
+

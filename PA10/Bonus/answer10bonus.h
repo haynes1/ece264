@@ -79,6 +79,7 @@ struct Business** get_business_reviews(struct YelpDataBST* bst,
  * address data and reviews for the given business name, without looking at any
  * data in the file about other businesses.
  */
+void noNameYesWords(char ** words, int num_words, const char * reviews_path);
 
 
 void destroy_business_bst(struct YelpDataBST* bst, int num_businesses);
