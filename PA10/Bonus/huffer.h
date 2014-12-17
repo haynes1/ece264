@@ -11,6 +11,8 @@ typedef struct WordData{
 	char * code; //the word's code
 	char * leftstring; //string of left chilren's words
 	char * rightstring; //string of right children's words
+	int num_leaves; //the number of leaf nodes in each parent
+	int subtree;//1 if is a subtree, 0 it it isn't
 	struct WordData * left; //pointer to left child
 	struct WordData * right; //pointer to right child
 }WordData;
@@ -20,6 +22,7 @@ typedef struct WordCode{
 	char * code;
 }WordCode;
 
+
 //returns a huffman tree of words 
 WordData * parseAndHuff(char* reviews_path, int * word_count);
 
@@ -28,4 +31,3 @@ void outputHuffmanFile(WordData * huffman_tree, char * reviews_path, int word_co
 void deHuffer(char * huffed_path, WordData * huffman_tree);
 
 void freeHuffmanTree(WordData * t);
-
