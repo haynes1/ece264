@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
 	if (argc == 2 && strcmp(argv[1], "1") == 0)
 	{
 		fprintf(stderr, "=================================================Starting Program=============================================\n");
-		fprintf(stderr, "Starting to build the BST. If you are trying to use the full reviews.tsv this will segfault.\n");
+		fprintf(stderr, "Starting to build the BST.\n");
 		fprintf(stderr, "This will take approximately 1ish minutes to complete before you will be prompted for multiple searches\n");
 	}
 	else
@@ -152,6 +152,18 @@ int main(int argc, char *argv[]){
 			}
 			a++;
 		}
+		if (strlen(name) == 0)
+		{
+			name = NULL;
+		}
+		if (strlen(state)==0)
+		{
+			state = NULL;
+		}
+		if (strlen(zip) == 0)
+		{
+			zip = NULL;
+		}
 		printf("words:\n");
 		for (i = 0; i < num_words; ++i)
 		{
@@ -159,7 +171,7 @@ int main(int argc, char *argv[]){
 		}
 		printf("searched for: name: %s, state: %s, zip: %s, num words: %d\n",name ,state,zip, num_words );
 		//using the user entered search, create the business structs
-		if (strcmp(name, "") == 0 && strcmp(state, "") == 0 && strcmp(zip, "") == 0 && num_words != 0)
+		if (name == NULL && state == NULL && zip == NULL && num_words != 0)
 		{
 			noNameYesWords(word_array, num_words, reviews_path);
 		}
