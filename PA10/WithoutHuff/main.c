@@ -46,22 +46,26 @@ static int getLine (char *prmpt, char *buff, size_t sz) {
 int main(int argc, char *argv[]){
 	int i;
 
-	const char businesses_path[] = "/home/cheif/ece264/solutions/ece264/PA10/businesses.short.tsv";
-	const char reviews_path[] = "/home/cheif/ece264/solutions/ece264/PA10/reviews.short.tsv";
+	char businesses_path[] = "/home/pharaoh/ece264/solutions/ece264/PA10/businesses.tsv";
+	char reviews_path[] = "/home/pharaoh/ece264/solutions/ece264/PA10/reviews.tsv";
 
 	if(argc == 1) {
 		fprintf(stderr, "=================================================Starting Program=============================================\n");
-		fprintf(stderr, "Run this program with a 1 as the argument to procede.\nThis will start the huffman compression.\n");
-		fprintf(stderr, "It will take approximately XXX to complete, and will only happen once before multiple searches can be made.\n\n");
+		fprintf(stderr, "Run this program with a 1 as the argument to procede.\nThis will start the building of the BST\n");
+		fprintf(stderr, "It will take 1ish min to complete, and will only happen once before multiple searches can be made.\n\n");
 		return EXIT_FAILURE;
 	}
 	if (argc == 2 && strcmp(argv[1], "1") == 0)
 	{
 		fprintf(stderr, "=================================================Starting Program=============================================\n");
-		fprintf(stderr, "Starting huffman compression.\n");
-		fprintf(stderr, "This will take approximately XXX minutes to complete before you will be prompted for multiple searches\n");
+		fprintf(stderr, "Starting to build the BST. If you are trying to use the full reviews.tsv this will segfault.\n");
+		fprintf(stderr, "This will take approximately 1ish minutes to complete before you will be prompted for multiple searches\n");
 	}
-
+	else
+	{
+		printf("argv[1] must be 1 to continue.\n");
+		return EXIT_FAILURE;
+	}
 
 	//create the BST
 	struct YelpDataBST * bst = NULL;
@@ -70,106 +74,92 @@ int main(int argc, char *argv[]){
 
 	//prompt user, and do the searches
 	int continue_searching = 1;
-	char * prompt = "Search Syntax: Name/Prefix State Zip Word0 Word1 Word2....Wordn\nTo search by word/words only type none 3 times, then your words\nTo Exit: -1\n";
+	char * prompt1 = "Name: ";
+	char * promptstate = "State: ";
+	char * promptzip = "Zip: ";
+	char * promptwords ="Words: ";
 	int max_line_length = 2000;
 	char * line = malloc(max_line_length * sizeof(char));
 	while(continue_searching == 1)
 	{
-		getLine(prompt, line, 2000);
-		if (strcmp(line, "-1") == 0)
-		{
-			printf("I really hope this demonstrates my ability to use the C language and problemsolve while coding\n");
-			free(line);
-			break;
-		}
-		printf("search for: %s\n", line);
-		//explode the search string
+		printf("++++++\nStarting a Search\nEnter -1 at any time to exit\n+++++\n");
 		char * name = malloc(MAXNAME * sizeof(char));
 		char * state = malloc(MAXSTATE * sizeof(char));
 		char * zip = malloc(MAXZIP * sizeof(char));
 		char * word = malloc(MAXWORD * sizeof(char));
 		int max_words_in_array = 20;
 		char ** word_array = malloc(max_words_in_array * sizeof(char *));
-		int num_words = 0;
+		getLine(prompt1, name, MAXNAME);
+		if (strcmp(name, "-1") == 0)
+		{
+			printf("I really hope this demonstrates my ability to use the C language and problemsolve while coding\n");
+			free(name);
+			break;
+		}
+		getLine(promptstate, state, MAXSTATE);
+		if (strcmp(state, "-1") == 0)
+		{
+			printf("I really hope this demonstrates my ability to use the C language and problemsolve while coding\n");
+			free(name);
+			free(state);
+			break;
+		}
+		getLine(promptzip, zip, MAXZIP);
+		if (strcmp(zip, "-1") == 0)
+		{
+			printf("I really hope this demonstrates my ability to use the C language and problemsolve while coding\n");
+			free(name);
+			free(state);
+			free(zip);
+			break;
+		}
+		getLine(promptwords, line, 2000);
+		if (strcmp(line, "-1") == 0)
+		{
+			printf("I really hope this demonstrates my ability to use the C language and problemsolve while coding\n");
+			free(name);
+			free(state);
+			free(zip);
+			free(word_array);
+			free(line);
+			break;
+		}
+		//take in the words to a string array
 		int b = 0;
 		int a = 0;
-		int cell_index = 0;
+		int num_words = 0;
 		while(line[a] != '\0')
 		{
 			if (line[a] == ' ') //test to see if we've moved to a new cell
 			{
-				cell_index++;
 				b = 0;
 				a++; //to move past the ' '
 			}
-			switch(cell_index)
+			word[b] = line[a];
+			b++;
+			word[b] = '\0';
+			//found an entire word, add it to the array
+			if (line[a+1] == ' ' || line[a+1] == '\0' || line[a+1] == '\n')
 			{
-				case 0:
-					name[b] = line[a];
-					b++;
-					name[b] = '\0';
-					break;
-				case 1:
-					state[b] = line[a];
-					b++;
-					state[b] = '\0';
-					break;
-				case 2:
-					zip[b] = line[a];
-					b++;
-					zip[b] = '\0';
-					break;
-				default:
-					break;
-			}
-			//dealing with the words
-			if (cell_index > 2)
-			{
-				word[b] = line[a];
-				b++;
-				word[b] = '\0';
-				//found an entire word, add it to the array
-				if (line[a+1] == ' ' || line[a+1] == '\0')
+				//ensure the array can handle it
+				if (num_words >= max_words_in_array-1)
 				{
-					//ensure the array can handle it
-					if (num_words >= max_words_in_array-1)
-					{
-						max_words_in_array *= 2;
-						word_array = realloc(word_array, max_words_in_array * sizeof(char));
-					}
-					word_array[num_words] = strdup(word);
-					num_words++;
+					max_words_in_array *= 2;
+					word_array = realloc(word_array, max_words_in_array * sizeof(char));
 				}
+				word_array[num_words] = strdup(word);
+				num_words++;
 			}
 			a++;
 		}
-		printf("cell_index: %d\n", cell_index);
-		//ensure everything that wasn't entered is null
-		switch(cell_index+1)
-		{
-			case 0:
-				free(name);
-				name = NULL;
-			case 1:
-				free(state);
-				state = NULL;
-			case 2:
-				free(zip);
-				zip = NULL;
-			case 3:
-				free(word_array);
-				word_array = NULL;
-			default:
-				break;
-		}
-		/*printf("name: %s, state: %s, zip: %s, word_array: %p\n", name, state, zip, word_array);
+		printf("words:\n");
 		for (i = 0; i < num_words; ++i)
 		{
-			printf("%s\n", word_array[i]);
-		}*/
-
+			printf("%s\n",word_array[i] );
+		}
+		printf("searched for: name: %s, state: %s, zip: %s, num words: %d\n",name ,state,zip, num_words );
 		//using the user entered search, create the business structs
-		if (strcmp(name, "none") == 0 && strcmp(state, "none") == 0 && strcmp(zip, "none") == 0)
+		if (strcmp(name, "") == 0 && strcmp(state, "") == 0 && strcmp(zip, "") == 0 && num_words != 0)
 		{
 			noNameYesWords(word_array, num_words, reviews_path);
 		}

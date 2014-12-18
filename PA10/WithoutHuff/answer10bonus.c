@@ -59,8 +59,7 @@ BusinessTree * buildTree(int * array, BusinessTree * barray, int beginning, int 
 	}
 	int mid = (end + beginning) / 2;
 	int ind = array[mid];
-	//printf("id: %d, name: %s, state: %s, zip_code: %s, offset: %li\n", barray[ind].id, barray[ind].name, barray[ind].state, 
-		//barray[ind].zip_code, barray[ind].offset);
+
 	//make the left
 	barray[ind].left = buildTree(array, barray, beginning, mid);
 	//make the right
@@ -155,19 +154,14 @@ ReviewOffset ** reviewIdsandOffsets(FILE * reviews_stream, int * num){
 			ret_array[num_unique_ids] = malloc(sizeof(ReviewOffset));
 			ret_array[num_unique_ids]->id = atoi(current_read_id);
 			ret_array[num_unique_ids]->offset = current_offset;
-			//printf("%d) id: %d, offset: %li\n", num_unique_ids, ret_array[num_unique_ids].id, ret_array[num_unique_ids].offset);
+	
 			num_unique_ids++;
 		}
 
 	}
 	free(line);
 	free(current_read_id);
-	/*int i;
-	for (i = 0; i < num_unique_ids; i++)
-	{
-		printf("id: %d, offset: %li\n", ret_array[i]->id, ret_array[i]->offset);
-	}
-	printf("num unique ids is: %d\n", num_unique_ids);*/
+
 	*num = num_unique_ids;
 
 	return ret_array;
@@ -223,11 +217,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	//sorting the array of review offsets, and sending the no longer needed data to the end of the array
 	qsort(review_idandoffsets, (size_t)num_reviewoffsets, sizeof(ReviewOffset *), comparrevoff);
 	//printing the array to ensure it worked
-	int i;
-	/*for (i = 0; i < num_reviewoffsets; i++)
-	{
-		printf("id: %d, offset: %li\n", review_idandoffsets[i]->id, review_idandoffsets[i]->offset);
-	}*/
+
 	//reading in businesses.tsv and creating the BST
 	long offset;
 	char id[MAXID];
@@ -275,7 +265,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 			}
 			a++;
 		}
-		//fprintf(stderr, "%d: offset = %li, Id = %d, name = %s, state = %s, zip_code = %s\n", i, offset, iId, name, state, zip_code);
+		
 
 		//create node of BST and populate it with the data
 		iId = atoi(id);
@@ -294,6 +284,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	fclose(businesses_stream);
 	fclose(reviews_stream);
 	//freeing the review_idandoffset array
+	int i;
 	for (i = 0; i < num_reviewoffsets; i++)
 	{
 		free(review_idandoffsets[i]);
@@ -311,14 +302,12 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	int uniquenames[num_businesses-1];
 	int uniquenamespos = 0;
 	BusinessTree * current;
-	BusinessTree * print;
 	for (i = 0; i < num_businesses-2; i++)
 	{
 		//read current and next business names
 		char * nameA = treearray[i].name;
 		char * nameB = treearray[i+1].name;
 		current = &treearray[i];
-		print = &treearray[i];
 		//the names are the same, add the next treenode to the list
 		if (strcmp(nameA, nameB) == 0)
 		{
@@ -335,15 +324,7 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
  				listlength++;
 			}
 			//print out the linked list
-			int p = 0;
-			printf("START+++++++++++++++++++++printing linked list\n");
-			while(print != NULL)
-			{
-				printf("%d) name: %s, businesses offset: %li next: %p\n", print->id, print->name, print->offset, print->next);
-				print = print->next;
-				p++;
-			}
-			printf("END+++++++++++++++++++++printing linked list\n");
+
 		}
 		else
 		{
@@ -708,10 +689,7 @@ struct Business* populateBusiness(BusinessTree * node, char* name, char * busine
 		//add the array of reviews to each location
 		reviews[num_locations] = getReviews(reviews_stream, node->id, 
 		node->first_reviewoffset, &num_reviews, words, num_words);
-		/*for (i = 0; i < num_reviews; i++)
-		{
-			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_locations][i].stars, reviews[num_locations][i].text);
-		}*/
+
 		//sorting the array of reviews
 		qsort(reviews[num_locations], (size_t)num_reviews, sizeof(struct Review), comparReviews);
 		/*for (i = 0; i < num_reviews; i++) //testing review array
@@ -774,12 +752,7 @@ struct Business* populateBusiness(BusinessTree * node, char* name, char * busine
 
 	//sort the array of locations by state >> city >> address and print
 	qsort(locations, (size_t)num_locations, sizeof(struct Location), compar);
-	/*for (i = 0; i < num_locations; i++)
-	{
-		printf("address: %s, city: %s, state: %s, zip: %s, reviews: %p, numrevs: %d\n",
-			locations[i].address,  locations[i].city,  locations[i].state,  locations[i].zip_code,  
-			locations[i].reviews, locations[i].num_reviews);
-	}*/
+
 
 	//add the location array to the Business struct
 	b->locations = locations;
@@ -919,13 +892,6 @@ void destroy_business_result(struct Business** b, int num_businesses){
 	for (i = 0; i < num_businesses; ++i)
 	{
 		free(b[i]->name);
-		/*printf("locations: %p, num_locations: %d\n",b->locations, b->num_locations);
-		for (i = 0; i < b->num_locations; i++)
-		{
-			printf("address: %s, city: %s, state: %s, zip: %s, reviews: %p, numrevs: %d\n",
-				b->locations[i].address,  b->locations[i].city,  b->locations[i].state,  b->locations[i].zip_code,  
-				b->locations[i].reviews, b->locations[i].num_reviews);
-		}*/
 		destroyLocations(b[i]->locations, b[i]->num_locations);
 		free(b[i]->locations);
 		free(b[i]);
