@@ -39,17 +39,17 @@ typedef struct Review {
 }Review;
 
 typedef struct Location {
+	int id;
 	char* address;              /* just the street address */
 	char* city;                 /* city name */
 	char* state;                /* 2 uppercase letters */
 	char* zip_code;             /* 5 digits */
-	struct Review* reviews;     /* ARRAY of Review struct objects */
-	uint32_t num_reviews;       /* size of the above array */
+	long first_review;     /* ARRAY of Review struct objects */
 }Location;
 
 typedef struct Business {
 	char* name;                 /* Business name, e.g., "McDonald's" */
-	struct Location* locations; /* ARRAY of Location struct objects */
+	struct Location** locations; /* ARRAY of Location struct objects */
 	uint32_t num_locations;     /* size of the above array */
 	/* Note that we do not include the average star rating with the Business. */
 }Business;
@@ -108,6 +108,8 @@ struct Business** get_business_reviews(struct YelpDataBST* bst,
  * data in the file about other businesses.
  */
 void noNameYesWords(char ** words, int num_words, const char * reviews_path);
+
+void printReviews(char * huffed_path, struct Location * l, char ** words, int num_words, WordData * huffman_tree);
 
 
 void destroy_business_bst(struct YelpDataBST* bst, int num_businesses);

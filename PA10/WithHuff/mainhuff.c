@@ -12,11 +12,10 @@
 #define MAXZIP 12
 #define MAXWORD 50
 
-void printBusiness(Business * b, int num);
+void printBusiness(Business * b, int num, char ** words, int num_words, WordData * huffman_tree);
 
-void printLocation(Location l, int num);
+void printLocation(Location * l, int num, char ** words, int num_words, WordData * huffman_tree);
 
-void printReview(Review r, int num);
 
 static int getLine (char *prmpt, char *buff, size_t sz) {
     int ch, extra;
@@ -183,19 +182,19 @@ int main(int argc, char *argv[]){
 			struct Business ** businesses;
 			int t_businesses = 0;
 			businesses = get_business_reviews(bst, name, state, zip, word_array, num_words, &t_businesses, huffman_tree, "dehuffed.txt");
-
+			destroy_business_bst(bst, total_businesses);
 			//print out the businesses
 			if (t_businesses != 0 && businesses != NULL)
 			{
 				for (i = 0; i < t_businesses; ++i)
 				{
-					printBusiness(businesses[i], i);
+					printBusiness(businesses[i], i, word_array, num_words, huffman_tree);
 				}
 				destroy_business_result(businesses, t_businesses);
 			}
 			else
 			{
-				printf("COULD NOT FIND THE BUSINESS\n");
+				printf("COULD NOT FIND THE BUSINESS, search again?\n");
 			}
 			//free the memory
 			free(word);
@@ -208,16 +207,16 @@ int main(int argc, char *argv[]){
 			}
 			free(word_array);
 		}
+		continue_searching = 0;
 	}
 
 	//free memory
-	destroy_business_bst(bst, total_businesses);
 	freeHuffmanTree(huffman_tree);
 
 	return EXIT_SUCCESS;
 }
 
-void printBusiness(Business * b, int num)
+void printBusiness(Business * b, int num, char ** words, int num_words, WordData * huffman_tree)
 {
 	if (b == NULL)
 	{
@@ -228,30 +227,25 @@ void printBusiness(Business * b, int num)
 	printf("=============================================================================================\n");
 	printf("Business # %d Name: %s\n", num, b->name);
 	printf("Number of Locations: %d\n", b->num_locations);
+	if (b->locations == NULL)
+	{
+		printf("---------------------------------------------------------------------------------------------\n");
+		printf("=============================================================================================\n");
+		return;
+	}
 	for (i = 0; i < b->num_locations; i++)
 	{
-		printLocation(b->locations[i], i);
+		printLocation(b->locations[i], i, words, num_words, huffman_tree);
 	}
 	printf("---------------------------------------------------------------------------------------------\n");
 	printf("=============================================================================================\n");
 	return;
 }
 
-void printLocation(Location l, int num)
+void printLocation(Location * l, int num, char ** words, int num_words, WordData * huffman_tree)
 {
-	int i;
 	printf("---------------------------------------------------------------------------------------------\n");
-	printf("Location %d) Address: %s\tState: %s\tCity: %s\tZip Code: %s\n",num, l.address, l.state, l.city, l.zip_code);
-	for (i = 0; i < l.num_reviews; i++)
-	{
-		printReview(l.reviews[i], i);
-	}
-	return;
-}
-
-void printReview(Review r, int num)
-{
-	printf("Review %d)\t%d stars\n",num, r.stars);
-	printf("%s\n", r.text);
+	printf("Location %d) Address: %s\tState: %s\tCity: %s\tZip Code: %s\n",num, l->address, l->state, l->city, l->zip_code);
+	//printReviews("huffed.txt", l, words, num_words, huffman_tree);
 	return;
 }
