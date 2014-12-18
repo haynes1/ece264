@@ -338,14 +338,14 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
 	int uniquenames[num_businesses-1];
 	int uniquenamespos = 0;
 	BusinessTree * current;
-	//BusinessTree * print;
+	BusinessTree * print;
 	for (i = 0; i < num_businesses-2; i++)
 	{
 		//read current and next business names
 		char * nameA = treearray[i].name;
 		char * nameB = treearray[i+1].name;
 		current = &treearray[i];
-		//print = &treearray[i];
+		print = &treearray[i];
 		//the names are the same, add the next treenode to the list
 		if (strcmp(nameA, nameB) == 0)
 		{
@@ -362,15 +362,15 @@ struct YelpDataBST* create_business_bst(const char* businesses_path,
  				listlength++;
 			}
 			//print out the linked list
-			/*int p = 0;
+			int p = 0;
 			printf("START+++++++++++++++++++++printing linked list\n");
 			while(print != NULL)
 			{
-				printf("%d) name: %s, next: %p\n", print->id, print->name, print->next);
+				printf("%d) name: %s: businesses offset: %li next: %p\n", print->id, print->name, print->offset, print->next);
 				print = print->next;
 				p++;
 			}
-			printf("END+++++++++++++++++++++printing linked list\n");*/
+			printf("END+++++++++++++++++++++printing linked list\n");
 		}
 		else
 		{
@@ -596,7 +596,7 @@ struct Location  locationConstruct(BusinessTree * tn, char * businesses_path)
 		char *error_str = strerror(errno);
 		printf("%s\n", error_str);
 	}
-	//printf("address: %s, city: %s, state: %s, zip: %s\n", loc->address, loc->city, loc->state, loc->zip_code);
+	//printf("address: %s, city: %s, state: %s, zip: %s\n", loc.address, loc.city, loc.state, loc.zip_code);
 	loc.reviews = NULL;
 	fclose(bstream);
 	free(line);
@@ -607,19 +607,17 @@ struct Location  locationConstruct(BusinessTree * tn, char * businesses_path)
 struct Review * getReviews(FILE * reviews_stream, int id, long first_reviewoffset, int * num_rev, 
 	char ** words, int num_words, WordData * huffman_tree)
 {
-	//int i;
-	printf("word_array: %p\n", words);
 
 	int maxreviews = 10;
 	struct Review * reviews = malloc(maxreviews * sizeof(struct Review));
 	char read_id[MAXID];
 	char stars[2];
 	char text[MAXREVIEW];
-	char * huffedline = malloc(sizeof(char) * MAXREVIEW);
-	char * line;
-	if (huffedline == NULL)
+	char * line = malloc(sizeof(char) * MAXREVIEW);
+	//char * line;
+	if (line == NULL)
 	{
-		printf("failed to malloc a line in function: getReviews\n");
+		printf("failed to malloc at line 620\n");
 		return NULL;
 	}
 	int cell_index;
@@ -631,8 +629,8 @@ struct Review * getReviews(FILE * reviews_stream, int id, long first_reviewoffse
 	do
 	{
 		contains_words = 0;
-		fgets(huffedline, MAXREVIEW, reviews_stream);
-		line = deHuffer_string(huffedline, huffman_tree);
+		fgets(line, MAXREVIEW, reviews_stream);
+		//line = deHuffer_string(huffedline, huffman_tree);
 		int c = 0;
 		int a = 0;
 		cell_index = 0;
@@ -716,16 +714,24 @@ struct Business* populateBusiness(BusinessTree * n, char* name, char * businesse
 	//create the structs and open the streams
 	struct Business * b = malloc(sizeof(struct Business));
 	struct Location * locations = NULL; //array of locations for the Business struct
-	struct Review ** reviews = NULL;
+	//struct Review ** reviews = NULL;
 
 	b->name = strdup(n->name);
 
 	b->locations = NULL;
 	int locationbuffersize = 10;
 	locations = malloc(locationbuffersize * sizeof(struct Location));
+	if (locations == NULL)
+	{
+		printf("failed to malloc at line 726\n");
+	}
 	int num_locations = 0;
 	int num_reviews = 0;
-	reviews = malloc(locationbuffersize * sizeof(struct Review *));
+	//reviews = malloc(locationbuffersize * sizeof(struct Review *));
+	//if (reviews == NULL)
+	{
+		//printf("failed to malloc at line 730\n");
+	}
 	//BusinessTree * tmp;
 	//create array of locations
 	while(n != NULL)
@@ -735,34 +741,37 @@ struct Business* populateBusiness(BusinessTree * n, char* name, char * businesse
 		{
 			locationbuffersize *= 2;
 			locations = realloc(locations, locationbuffersize * sizeof(struct Location));
-			reviews = realloc(reviews, locationbuffersize * sizeof(struct Review *));
+			//reviews = realloc(reviews, locationbuffersize * sizeof(struct Review *));
 		}
-		locations[num_locations] = locationConstruct(n, businesses_path);
+		struct Location l = locationConstruct(n, businesses_path);
+		locations[num_locations] = l;
+		printf("IN LOOP) address: %s, city: %s, state: %s, zip: %s\n", locations[num_locations].address, locations[num_locations].city, locations[num_locations].state, locations[num_locations].zip_code);
 		//add the array of reviews to each location
-		printf("stream: %p, id: %d, revoffset: %li, tree: %p\n", reviews_stream, n->id, n->first_reviewoffset, huffman_tree );
-		reviews[num_locations] = getReviews(reviews_stream, n->id, 
-			n->first_reviewoffset, &num_reviews, words, num_words, huffman_tree);
+		//printf("reviews: %p, num_locations: %d\n",reviews, num_locations);
+		//reviews[num_locations] = NULL;//getReviews(reviews_stream, n->id, 
+			//n->first_reviewoffset, &num_reviews, words, num_words, huffman_tree);
 		/*for (i = 0; i < num_reviews; i++)
 		{
 			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_locations][i].stars, reviews[num_locations][i].text);
 		}*/
 		//sorting the array of reviews
-		qsort(reviews[num_locations], (size_t)num_reviews, sizeof(struct Review), comparReviews);
+		//qsort(reviews[num_locations], (size_t)num_reviews, sizeof(struct Review), comparReviews);
 		/*for (i = 0; i < num_reviews; i++) //testing review array
 		{
 			printf("id: %d, stars: %d, text: %s\n", found_node->id, reviews[num_locations][i].stars, reviews[num_locations][i].text);
 		}*/
 		//populating locations
-		locations[num_locations].reviews = reviews[num_locations];
-		locations[num_locations].num_reviews = num_reviews;
+		locations[num_locations].reviews = NULL;//reviews[num_locations];
+		locations[num_locations].num_reviews = 5;//num_reviews;
 		//tmp = found_node;
 		n = n->next;
 		//free(tmp);
 		num_locations++;
 	}
+
 	fclose(reviews_stream);
-	free(reviews);
-	b->num_locations = num_locations;
+	//free(reviews);
+	//b->num_locations = num_locations;
 
 	//filter by state and zip code
 	int j;
@@ -807,13 +816,13 @@ struct Business* populateBusiness(BusinessTree * n, char* name, char * businesse
 	}
 
 	//sort the array of locations by state >> city >> address and print
-	qsort(locations, (size_t)num_locations, sizeof(struct Location), compar);
-	/*for (i = 0; i < num_locations; i++)
+	//qsort(locations, (size_t)num_locations, sizeof(struct Location), compar);
+	for (i = 0; i < num_locations; i++)
 	{
-		printf("address: %s, city: %s, state: %s, zip: %s, reviews: %p, numrevs: %d\n",
+		printf("OUT LOOP) address: %s, city: %s, state: %s, zip: %s, reviews: %p, numrevs: %d\n",
 			locations[i].address,  locations[i].city,  locations[i].state,  locations[i].zip_code,  
 			locations[i].reviews, locations[i].num_reviews);
-	}*/
+	}
 
 	//add the location array to the Business struct
 	b->locations = locations;
